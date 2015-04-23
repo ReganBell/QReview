@@ -7,7 +7,10 @@ Q Comment Summarization
 
 import re
 import math
-
+import nltk
+from nltk.corpus import wordnet_ic
+from nltk.corpus import wordnet as wn
+from nltk.corpus.reader.wordnet import information_content
 
 # helper methods for sentence similarity
 
@@ -40,15 +43,28 @@ def cosine_similarity(vector1, vector2):
     """
     return dot_product(vector1, vector2) / (vector_length(vector1) * vector_length(vector2))
 
-
 def similarity_score(word1, word2):
     """
     :param word1: string (word)
     :param word2: string (word)
     :return: string as section 2.2 of https://www.aaai.org/Papers/FLAIRS/2004/Flairs04-139.pdf
     """
-    return 0
-
+    alpha = 0.2
+    beta = 0.45
+    synsets1 = wn.synsets(word1)
+    synsets2 = wn.synsets(word2)
+    highest_score = 0
+    for synset1 in synsets1:
+        for synset2 in synsets2:
+            l = synset1.shortest_path_distance(synset2)
+            subsumers = synset1.lowest_common_hypernyms(synset2)
+            score = 0
+            for subsumer in subsumers:
+                    h = subsumer.max_depth()
+                    score = math.exp((-1) * alpha * l) * (math.exp(beta * h) - math.exp((-1) * beta * h)) / (math.exp(beta * h) + math.exp((-1) * beta * h))
+            if score > highest_score:
+                highest_score = score
+    return highest_score
 
 def semantic_vector_element(word, words, threshold):
     """
