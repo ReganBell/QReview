@@ -8,71 +8,107 @@ Q Comment Summarization
 import re
 import math
 import nltk
-from nltk.corpus import wordnet_ic
 from nltk.corpus import wordnet as wn
-from nltk.corpus.reader.wordnet import information_content
+
 
 # helper methods for sentence similarity
 
+def vector_operator(vector1, vector2, operator):
+    to_return = []
+    for i in range(0, len(vector1)):
+        to_return.append(operator(vector1[i], vector2[i]))
+    return to_return
+
+def vector_sum(vector1, vector2):
+    return vector_operator(vector1, vector2, lambda a, b: a + b)
+
+def vector_diff(vector1, vector2):
+    return vector_operator(vector1, vector2, lambda a, b: a - b)
 
 def dot_product(vector1, vector2):
-    """
-    :param vector1: list of floats (vector)
-    :param vector2: list of floats (assumed same length as l1, vector)
-    :return: dot product of given vectors (sum of products of corresponding elements)
-    """
     to_return = 0
     for i in range(0, len(vector1)):
         to_return += vector1[i] * vector2[i]
     return to_return
 
-
 def vector_length(vector):
-    """
-    :param vector: list of integers (vector)
-    :return: float, length of given vector
-    """
     return math.sqrt(dot_product(vector, vector))
 
-
 def cosine_similarity(vector1, vector2):
-    """
-    :param vector1: list of floats (vector)
-    :param vector2: list of floats (assumed same length as l1, vector)
-    :return: float, cosine of angle between given vectors (from 0 if vectors are anti-parallel to 1 if they're parallel)
-    """
     return dot_product(vector1, vector2) / (vector_length(vector1) * vector_length(vector2))
 
+def case_1(word1, word2):
+    concepts1 = wn.synsets(word1)
+    concepts2 = wn.synsets(word2)
+    for concept1 in concepts1:
+        for concept2 in concepts2:
+            if concept1 == concept2:
+                return True
+    return False
+
+def case_2(word1, word2):
+    concepts1 = wn.synsets(word1)
+    concepts2 = wn.synsets(word2)
+    for concept1 in concepts1:
+        for concept2 in concepts2:
+            words1 = map(nltk.corpus.reader.wordnet.Lemma.name, concept1.lemmas())
+            words2 = map(nltk.corpus.reader.wordnet.Lemma.name, concept2.lemmas())
+            for word1 in words1:
+                for word2 in words2:
+                    if word1 == word2:
+                        return True
+    return False
+
+def get_path_length(word1, word2):
+    if case_1(word1, word2):
+        return 0
+    elif case_2(word1, word2):
+        return 1
+    else:
+        concepts1 = wn.synsets(word1)
+        concepts2 = wn.synsets(word2)
+        shortest_path = None
+        for concept1 in concepts1:
+            for concept2 in concepts2:
+                if concept1.pos() == concept2.pos():
+                    path_length = concept1.shortest_path_distance(concept2, simulate_root=True)
+                    if shortest_path is None:
+                        shortest_path = path_length
+                    elif path_length < shortest_path:
+                        shortest_path = path_length
+        if shortest_path is None:
+            return 0
+        else:
+            return shortest_path
+
+def get_subsumer_height(word1, word2):
+    concepts1 = wn.synsets(word1)
+    concepts2 = wn.synsets(word2)
+    shortest_path = None
+    subsumers = None
+    for concept1 in concepts1:
+        for concept2 in concepts2:
+            if concept1.pos() == concept2.pos():
+                path_length = concept1.shortest_path_distance(concept2, simulate_root=True)
+                if shortest_path is None:
+                    shortest_path = path_length
+                    subsumers = concept1.lowest_common_hypernyms(concept2)
+                elif path_length < shortest_path:
+                    shortest_path = path_length
+                    subsumers = concept1.lowest_common_hypernyms(concept2)
+    if (subsumers is None) or (len(subsumers) == 0):
+        return 0
+    else:
+        return subsumers[0].max_depth()
+
 def similarity_score(word1, word2):
-    """
-    :param word1: string (word)
-    :param word2: string (word)
-    :return: string as section 2.2 of https://www.aaai.org/Papers/FLAIRS/2004/Flairs04-139.pdf
-    """
     alpha = 0.2
-    beta = 0.45
-    synsets1 = wn.synsets(word1)
-    synsets2 = wn.synsets(word2)
-    highest_score = 0
-    for synset1 in synsets1:
-        for synset2 in synsets2:
-            l = synset1.shortest_path_distance(synset2)
-            subsumers = synset1.lowest_common_hypernyms(synset2)
-            score = 0
-            for subsumer in subsumers:
-                    h = subsumer.max_depth()
-                    score = math.exp((-1) * alpha * l) * (math.exp(beta * h) - math.exp((-1) * beta * h)) / (math.exp(beta * h) + math.exp((-1) * beta * h))
-            if score > highest_score:
-                highest_score = score
-    return highest_score
+    beta = 0.6
+    l = get_path_length(word1, word2)
+    h = get_subsumer_height(word1, word2)
+    return math.exp((-1)*alpha*l)*((math.exp(beta*h)-math.exp((-1)*beta*h))/(math.exp(beta*h)+math.exp((-1)*beta*h)))
 
 def semantic_vector_element(word, words, threshold):
-    """
-    :param word: string (word)
-    :param words: list of strings (words)
-    :param threshold: float (between 0 and 1, minimum nonzero level of similarity permitted)
-    :return: float, the maximum semantic similarity between given word and a word int the given list, if above threshold
-    """
     if word in words:
         return 1
     else:
@@ -86,17 +122,10 @@ def semantic_vector_element(word, words, threshold):
         else:
             return 0
 
-
 def semantic_similarity(sentence1, sentence2, threshold):
-    """
-    :param sentence1: string (sentence)
-    :param sentence2: string (sentence)
-    :param threshold: float (between 0 and 1, minimum nonzero level of similarity permitted)
-    :return: string, as section 2.1 of https://www.aaai.org/Papers/FLAIRS/2004/Flairs04-139.pdf
-    """
-    words1 = set(re.split("[\W]", sentence1))
-    words2 = set(re.split("[\W]", sentence2))
-    all_words = words1.union(words2)
+    words1 = re.split("[\W]", sentence1)
+    words2 = re.split("[\W]", sentence2)
+    all_words = set(words1).union(set(words2))
     semantic_vector1 = []
     semantic_vector2 = []
     for word in all_words:
@@ -104,35 +133,57 @@ def semantic_similarity(sentence1, sentence2, threshold):
         semantic_vector2.append(semantic_vector_element(word, words2, threshold))
     return cosine_similarity(semantic_vector1, semantic_vector2)
 
+def index_in(word, words, threshold):
+    highest_similarity = 0
+    highest_index = None
+    for index, word1 in enumerate(words):
+        if word1 == word:
+            return index
+        else:
+            similarity = similarity_score(word, word1)
+            if similarity > highest_similarity:
+                highest_similarity = similarity
+                highest_index = index
+    if highest_similarity > threshold:
+        return highest_index
+    else:
+        return 0
+
+def normalized_difference(vector1, vector2):
+    return 1 - (vector_length(vector_diff(vector1, vector2)) / vector_length(vector_sum(vector1, vector2)))
+
+def word_order_similarity(sentence1, sentence2, threshold):
+    words1 = re.split("[\W]", sentence1)
+    words2 = re.split("[\W]", sentence2)
+    all_words = set(words1).union(set(words2))
+    order_vector1 = []
+    order_vector2 = []
+    for word in all_words:
+        order_vector1.append(index_in(word, words1, threshold))
+        order_vector2.append(index_in(word, words2, threshold))
+    return normalized_difference(order_vector1, order_vector2)
+
 
 # sentence similarity
 
-
-def sentence_similarity(s1, s2):
-    """
-    :param s1: first sentence (string)
-    :param s2: second sentence (string)
-    :return: string, sentence similarity as defined by https://www.aaai.org/Papers/FLAIRS/2004/Flairs04-139.pdf
-    """
-    semantic_similarity_threshold = 0.2
-    word_order_threshold = 0.4
-    semantic_similarity_weight = 0.85
-
-    semantic = semantic_similarity(s1, s2, semantic_similarity_threshold)
-    order = 0
-    similarity = semantic_similarity_weight * semantic + (1 - semantic_similarity_weight) * order
+def sentence_similarity(sentence1, sentence2):
+    similarity_threshold = 0.2
+    order_threshold = 0.4
+    semantic_weight = 0.85
+    semantic = semantic_similarity(sentence1, sentence2, similarity_threshold)
+    order = word_order_similarity(sentence1, sentence2, order_threshold)
+    similarity = semantic_weight * semantic + (1 - semantic_weight) * order
     return similarity
 
 
 # sentiment analysis
 
-
 def get_dictionary():
     f = open('sentiment-dictionary.tff', 'r')
-    list = f.readlines()
+    lines = f.readlines()
     f.close()
-    dict = {}
-    for line in list:
+    dictionary = {}
+    for line in lines:
         tokens = line.split()
         word = tokens[2].split('=')[1]
         polarity_string = tokens[5].split('=')[1]
@@ -149,8 +200,8 @@ def get_dictionary():
             strength = 1
         else:
             strength = 1
-        dict[word] = polarity * strength
-    return dict
+        dictionary[word] = polarity * strength
+    return dictionary
 
 
 def sentiment(sentence, dictionary):
