@@ -4,6 +4,10 @@ from commentsearching import sentences_for_key_phrase
 from TFIDFCalculator import TFIDFCalculator
 import cProfile
 import re
+import sys
+reload(sys)
+sys.setdefaultencoding("utf-8")
+from Analyze import analyze
 
 def parse_course_file(path):
 
@@ -34,8 +38,37 @@ for course in courses:
     min_keyword_len = 4
     #calc = TFIDFCalculator(courses)
     key_phrases = key_phrases_for_course(course, pos, window, custom_stop, min_keyword_len)
+    print course[0]
+    key_sentences = []
     for key_phrase in key_phrases:
         sentences = sentences_for_key_phrase(key_phrase, course[1])
+        groups = analyze(key_phrase, sentences[0:5])
+        if len(groups) > 0:
+            key_sentences += groups
 
-    print course[0]
-    print key_phrases
+    pros = []
+    cons = []
+    neutrals = []
+
+    for group in key_sentences:
+        sentences, sentiment = group
+        if sentiment == 1:
+            pros += [sentences]
+        elif sentiment == -1:
+            cons += [sentences]
+        else:
+            neutrals += [sentences]
+
+    print "Pros"
+    for pro in pros:
+        print "%s (in %d comment%s)" % (pro[0], len(pro), "s" if len(pro) > 1 else "")
+
+
+    print "Cons"
+    for con in cons:
+        print "%s (in %d comment%s)" % (con[0], len(con), "s" if len(con) > 1 else "")
+
+
+    print "Neutral"
+    for neutral in neutrals:
+        print "%s (in %d comment%s)" % (neutral[0], len(neutral), "s" if len(neutral) > 1 else "")
