@@ -17,7 +17,13 @@ from operator import itemgetter
 import networkx as nx
 import os
 from nltk.corpus import stopwords
-from collections import defaultdict
+from pagerank import pagerank
+
+
+def lowercase_tokenize(string):
+
+    raw_tokens = nltk.word_tokenize(string)
+    return [token.lower() for token in raw_tokens]
 
 
 def parse_course_file(path):
@@ -37,59 +43,59 @@ def parse_course_file(path):
     return courses
 
 
-def key_phrases_for_course(course, parts_of_speech, window, stop_words, min_keyword_length):
+def find_key_phrases(tokens, parts_of_speech, window):
 
-    phrase_dict = defaultdict(int)
-    for comment in course[1]:
-        phrases = find_key_phrases(comment, parts_of_speech, window, stop_words, min_keyword_length)
-        for phrase in phrases: phrase_dict[phrase] += 1
-
-    phrases = sorted(phrase_dict, key=phrase_dict.get, reverse=True)
-
-    return phrases[0:(len(phrases) / 3) + 1]
-
-def collapse_key_phrases(tokens, key_words):
-
-    collapsed = []
-    for j in range(1, len(tokens)):
-        left = tokens[j-1]
-        right = tokens[j]
-        if left in key_words:
-            while right in key_words:
-                j += 1
-                left += (' ' + right)
-                right = [tokens[j] if j < len(tokens) else ""]
-            collapsed += [left]
-            j += 1
-    return collapsed
-
-def find_key_phrases(text, parts_of_speech, window, stop_words, min_keyword_length):
-
-    tokens = nltk.word_tokenize(text)
-    stop = stopwords.words('english')
-    stop += stop_words
-    filtered_tokens = [token for token in tokens if token not in stop and len(token) > min_keyword_length]
-    tagged_tokens = nltk.pos_tag(filtered_tokens)
-    vertices = set([])
+    tagged_tokens = nltk.pos_tag(tokens)
+    vertices = []
     for i in range(0, len(tagged_tokens)):
         if tagged_tokens[i][1] in parts_of_speech:
             right = min(i + window, len(tagged_tokens))
             for j in range(i+1, right):
-                vertex = (filtered_tokens[i], filtered_tokens[j], 1)
+                vertex = (tokens[i], tokens[j], {"weight": 1})
+                vertices += [vertex]
+    return pagerank(vertices, 0.15, 100)
 
-                vertices.add(vertex)
 
-    gr = nx.Graph()
-    gr.add_nodes_from(tokens)
-    for (a, b, w) in vertices:
-        gr.add_edge(a, b, weight=w)
+def key_phrases_for_course(course, parts_of_speech, window, stop_words, min_keyword_length):
 
-    calculated_page_rank = nx.pagerank(gr, weight='weight')
-    key_words = sorted(calculated_page_rank, key=calculated_page_rank.get, reverse=True)
-    #collapsed = collapse_key_phrases(tokens, key_words)
-    collapsed = key_words
+    words = {}
+    all_tokens = []
+    stop = stopwords.words('english')
+    stop += stop_words
 
-    return [collapsed[0]] if len(collapsed) > 0 else []
+    for comment in course[1]:
+        tokens = lowercase_tokenize(comment)
+        filtered_tokens = [token for token in tokens if (token not in stop and len(token) >= min_keyword_length)]
+        all_tokens += tokens
+        new = find_key_phrases(filtered_tokens, parts_of_speech, window)
+        words.update(new)
+
+    sorted_words = sorted(words, key=words.get, reverse=True)
+    top_third_words = sorted_words[0:(len(sorted_words) / 3) + 1]
+    top_words_dict = {}
+    for word in top_third_words:
+        top_words_dict.update({word: words[word]})
+    phrases = collapse_key_phrases(all_tokens, top_words_dict)
+
+    return sorted(phrases, key=words.get, reverse=True)
+
+
+def collapse_key_phrases(tokens, key_words):
+
+    collapsed = {}
+    for j in range(1, len(tokens)):
+        left = tokens[j-1]
+        right = tokens[j]
+        if left in key_words:
+            combined_score = key_words[left]
+            while right in key_words:
+                j += 1
+                left += (' ' + right)
+                combined_score += key_words[right]
+                right = tokens[j] if j < len(tokens) else ""
+            collapsed.update({left: combined_score})
+            j += 1
+    return collapsed
 
 nltk.download('punkt')
 nltk.download('stopwords')
@@ -100,7 +106,8 @@ for course in courses:
     # Nouns and adjectives, run nltk.help.upenn_tagset() to see all possible tags
     parts_of_speech = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS"]
     window = 2
-    custom_stop_words = ["course", "class"]
-    min_keyword_length = 2
+    custom_stop_words = ["course", "class", "this", "will", "in", "you", "make", "sure", "expect"]
+    min_keyword_length = 4
     key_phrases = key_phrases_for_course(course, parts_of_speech, window, custom_stop_words, min_keyword_length)
+    print course[0]
     print key_phrases
