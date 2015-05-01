@@ -251,12 +251,11 @@ def group_sentences(sentences):
         for c, s2 in enumerate(sentences):
             if r <= c:
                 matrix[r].append(0)
-            elif sentence_similarity(s1, s2) > 0.6:
+            elif sentence_similarity(s1, s2) > 0.5:
                 matrix[r].append(1)
             else: matrix[r].append(0)
     for r, row in enumerate(matrix):
         group = []
-        matches = []
         for c, val in enumerate(row):
             if r == c:
                 group.append(sentences[c])
@@ -350,8 +349,6 @@ class SentimentAnalysis:
                 else:
                     pos = 0
                 to_return.append((group, pos))
-        for group, pos in to_return:
-            print pos, group
         return to_return
 
 

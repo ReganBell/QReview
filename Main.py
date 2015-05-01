@@ -22,11 +22,11 @@ def parse_course_file(path):
 
     return courses
 
-'''
+
 nltk.download('punkt')
 nltk.download('stopwords')
 nltk.download('maxent_treebank_pos_tagger')
-'''
+
 courses = parse_course_file("2014QComments")
 analyzer = Analyze.SentimentAnalysis()
 
@@ -39,26 +39,49 @@ for course_num, course in enumerate(courses):
     min_keyword_len = 4
     key_phrases = key_phrases_for_course(course, pos, window, custom_stop, min_keyword_len)
     print course_num, course[0]
-    key_sentences = set()
+    groups = []
     for key_phrase in key_phrases:
         phrases = phrases_for_key_phrase(key_phrase, course[1])
-        for phrase in phrases:
-            if len(phrase) > 1:
-                key_sentences.add(phrase)
-    groups = analyzer.analyze(list(key_sentences))
+        phrases = filter(lambda d: len(d) > 1, phrases)
+        grps = analyzer.analyze(phrases)
+        if len(grps) > 0:
+            groups += grps
+    final_groups = []
+    while True:
+        max_length = 0
+        group = None
+        positivity = None
+        for grp, pos in groups:
+            length = len(grp)
+            if length > max_length:
+                max_length =length
+                group = grp
+                positivity = pos
+        if group is None:
+            break
+        else:
+            final_groups.append((group, positivity))
+            groups.remove((group, positivity))
+            for sentence in group:
+                for grp, pos in groups:
+                    for sentence2 in grp[:]:
+                        if sentence == sentence2:
+                            grp.remove(sentence)
 
     pros = []
     cons = []
     neutrals = []
 
-    for group in groups:
+    for group in final_groups:
         phrases, sentiment = group
         if sentiment == 1:
             pros += [phrases]
         elif sentiment == -1:
             cons += [phrases]
+        """
         else:
             neutrals += [phrases]
+        """
 
     print "Pros"
     for pro in pros:
@@ -69,9 +92,9 @@ for course_num, course in enumerate(courses):
     for con in cons:
         print "%s (in %d comment%s)" % (con[0], len(con), "s" if len(con) > 1 else "")
 
-
+    print ""
+"""
     print "Neutral"
     for neutral in neutrals:
         print "%s (in %d comment%s)" % (neutral[0], len(neutral), "s" if len(neutral) > 1 else "")
-
-    print ""
+"""
