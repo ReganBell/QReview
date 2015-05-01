@@ -53,7 +53,8 @@ class CommentSearching(object):
                                     for wp in temp_list:
                                         if wp.find(keyword) != -1:
                                             key_index = temp_list.index(wp)
-
+                                        elif (' ' in keyword):
+                                            key_index = temp_list.index(keyword.split( )[0])
                                     print wordpunct, temp_list
                                     if temp_list.__contains__(wordpunct):
                                         wp_index = temp_list.index(wordpunct)
@@ -80,4 +81,4 @@ class CommentSearching(object):
         return sentences_w_keywords
 
 
-cs = CommentSearching("CHEM 60: Foundations of Physical Chemistry", ["work", "exam"])
+cs = CommentSearching("CHEM 60: Foundations of Physical Chemistry", ["problem sets"])
