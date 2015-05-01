@@ -13,7 +13,6 @@ from nltk.stem.snowball import EnglishStemmer
 from nltk.corpus.reader.wordnet import Lemma
 from nltk.corpus import wordnet
 
-import Classifier
 import HelperDicts
 
 # helper methods for sentence similarity
@@ -240,53 +239,11 @@ def sentence_similarity(sentence1, sentence2):
     return similarity
 
 
-def group_sentences_helper(sentence_groups):
-    """
-    :type sentence_groups: string list list
-    :param sentence_groups: list of lists (groups) of sentences
-    :return: a fully consolidated group of sentence groups (similar groups are combined)
-    """
-    threshold = 0.45
-    max_similarity = 0
-    first_index = None
-    second_index = None
-    for index1, sentence_group1 in enumerate(sentence_groups):
-        for index2, sentence_group2 in enumerate(sentence_groups):
-            if sentence_group1 != sentence_group2:
-                min_local_similarity = 1
-                for sentence1 in sentence_group1:
-                    for sentence2 in sentence_group2:
-                        similarity = sentence_similarity(sentence1, sentence2)
-                        if similarity < min_local_similarity:
-                            min_local_similarity = similarity
-                if min_local_similarity > max_similarity:
-                    max_similarity = min_local_similarity
-                    first_index = index1
-                    second_index = index2
-    if max_similarity > threshold:
-        new_sentence_groups = []
-        for index, sentence_group in enumerate(sentence_groups):
-            if (index != first_index) & (index != second_index):
-                new_sentence_groups.append(sentence_group)
-        new_sentence_groups.append(sentence_groups[first_index] + sentence_groups[second_index])
-        return group_sentences_helper(new_sentence_groups)
-    else:
-        return sentence_groups
-
-"""
 def group_sentences(sentences):
-    num_sentences = len(sentences)
-    if len(sentences) > 4:
-        halfway = num_sentences / 2
-        group_first_half = group_sentences_helper([[s] for s in sentences[:halfway]])
-        group_second_half = group_sentences_helper([[s] for s in sentences[halfway:]])
-        return group_sentences_helper(group_first_half + group_second_half)
-    else:
-        return group_sentences_helper([[s] for s in sentences])
-"""
-
-
-def group_sentences(sentences):
+    """
+    :type sentences: string list
+    :return: list a fully consolidated group of sentence groups (similar groups are combined)
+    """
     groups = []
     matrix = []
     for r, s1 in enumerate(sentences):
@@ -329,80 +286,6 @@ def group_sentences(sentences):
         to_return.append(to_add)
     return to_return
 
-"""
-def group_sentences(sentences):
-    groups = []
-    matrix = []
-    for r, s1 in sentences:
-        matrix.append([])
-        for c, s2 in sentences:
-            if r <= c:
-                matrix[r].append(0)
-            elif sentence_similarity(s1, s2) > 0.6:
-                matrix[r].append(1)
-            else: matrix[r].append(0)
-    matrix = [[1 if (s1 == s2) or (sentence_similarity(s1, s2) > 0.6) else 0 for s1 in sentences] for s2 in sentences]
-    for r, row in enumerate(matrix):
-        group = []
-        matches = []
-        for c, val in enumerate(row):
-            if val == 1:
-                if r == c:
-                    group.append(sentences[c])
-                else:
-                    matches.append((r, c))
-        for i, (r1, c1) in enumerate(matches):
-            similar_to_rest = True
-            for r2, c2 in matches[(i+1):]:
-                if matrix[c1][c2] != 1:
-                    similar_to_rest = False
-            if similar_to_rest:
-                group.append(sentences[c1])
-        groups.append(group)
-    to_return = []
-    while len(groups) > 0:
-        longest_group = 0
-        to_add = []
-        for group in groups:
-            if len(group) > longest_group:
-                longest_group = len(group)
-                to_add= group
-        groups.remove(to_add)
-        for sentence in to_add:
-            for group in groups:
-                if sentence in group:
-                    group.remove(sentence)
-        to_return.append(to_add)
-    return to_return
-"""
-
-'''
-def group_sentences(sentences):
-    groups = []
-    matrix = [[sentence_similarity(s1, s2) for s1 in sentences] for s2 in sentences]
-    for row in matrix:
-        print row
-    highest_score = 0
-    highest_row = None
-    highest_col = None
-    groups =[]
-    while True:
-        for r, row in enumerate(matrix):
-            for c, val in enumerate(row):
-                together = False
-                for group in groups:
-                    if (r in group) & (c in group):
-                        together = True
-                if not together:
-
-                    if val > highest_score:
-                        highest_score = val
-                        highest_row = r
-                        highest_col = c
-                        groups.append([r,c])
-        if highest_score < 0.6:
-            break
-'''
 
 # sentiment analysis
 
@@ -452,39 +335,39 @@ class SentimentAnalysis:
                 positivity += polarity
         return positivity
 
-
-def analyze(phrases):
-    """
-    :type phrases: string list
-    :param phrases: list of phrases to analyze
-    :return: tuple (string list, int) list: the string list are similar phrases, the int
-             is 0, -1, and 1 for neutral, negative, and positive, respectively.
-    """
-    analyzer = SentimentAnalysis()
-    groups = group_sentences(phrases)
-    to_return = []
-    for index, group in enumerate(groups):
-        positivity = 0.0
-        for phrase in group:
-            positivity += analyzer.positivity(phrase)
-        if len(group) > 0:
-            average_positivity = positivity / ((1.0) * len(group))
-            if average_positivity >= 1:
-                pos = 1
-            elif average_positivity <= -1:
-                pos = -1
-            else:
-                pos = 0
-            to_return.append((group, pos))
-    return to_return
+    def analyze(self, phrases):
+        """
+        :type phrases: string list
+        :param phrases: list of phrases to analyze
+        :return: tuple (string list, int) list: the string list are similar phrases, the int
+                 is 0, -1, and 1 for neutral, negative, and positive, respectively.
+        """
+        groups = group_sentences(phrases)
+        to_return = []
+        for index, group in enumerate(groups):
+            positivity = 0.0
+            for phrase in group:
+                positivity += self.positivity(phrase)
+            if len(group) > 0:
+                average_positivity = positivity / ((1.0) * len(group))
+                if average_positivity >= 1:
+                    pos = 1
+                elif average_positivity <= -1:
+                    pos = -1
+                else:
+                    pos = 0
+                to_return.append((group, pos))
+        return to_return
 
 
 def run():
-    #sentences = ["The big cat jumped over the moon","The big feline leaped above the lunar object", "The teacher likes to eat big apples",
-    #             "The big educator enjoys eating fruit","My brother climbs the big wall", "Big fat people eat cake"]
-    sentences = ['Yascha is a brilliant writer and a great guy', 'Take this course if you want a good Expos experience', 'Yascha is a great teacher who leads lively discussions', 'This is a very good class for expos', 'Other expos classes could be better', "Make sure that you're very interested in government", "If you're at all interested in technology", 'The essays are difficult but rewarding']
+    sentences = ["The big cat jumped over the moon","The big feline leaped above the lunar object", "The teacher likes to eat big apples",
+                 "The big educator enjoys eating fruit","My brother climbs the big wall", "Big fat people eat cake"]
+    #sentences = ['Yascha is a brilliant writer and a great guy', 'Take this course if you want a good Expos experience', 'Yascha is a great teacher who leads lively discussions', 'This is a very good class for expos', 'Other expos classes could be better', "Make sure that you're very interested in government", "If you're at all interested in technology", 'The essays are difficult but rewarding']
+    analyzer = SentimentAnalysis()
+
     start_time = time.time()
-    groups = analyze(sentences)
+    groups = analyzer.analyze(sentences)
     print("--- %s seconds ---" % (time.time() - start_time))
     for sentences, pos in groups:
         print pos, sentences

@@ -4,7 +4,7 @@ from commentsearching import phrases_for_key_phrase
 import sys
 reload(sys)
 sys.setdefaultencoding("utf-8")
-from Analyze import analyze
+import Analyze
 
 def parse_course_file(path):
 
@@ -28,6 +28,8 @@ nltk.download('stopwords')
 nltk.download('maxent_treebank_pos_tagger')
 '''
 courses = parse_course_file("2014QComments")
+analyzer = Analyze.SentimentAnalysis()
+
 for course_num, course in enumerate(courses):
 
     # Nouns and adjectives, run nltk.help.upenn_tagset() to see all possible tags
@@ -43,7 +45,7 @@ for course_num, course in enumerate(courses):
         for phrase in phrases:
             if len(phrase) > 1:
                 key_sentences.add(phrase)
-    groups = analyze(list(key_sentences))
+    groups = analyzer.analyze(list(key_sentences))
 
     pros = []
     cons = []
