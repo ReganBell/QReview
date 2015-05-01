@@ -34,7 +34,7 @@ def tsplit(string, delimiters):
     return stack
 
 
-def phrase_for_sentence(key_phrase, temp_list, pos_tag):
+def phrase_for_sentence(key_phrase, temp_list, pos_tag, max_length):
         for wp in temp_list:
             if wp.find(key_phrase) != -1:
                 key_index = temp_list.index(wp)
@@ -71,20 +71,20 @@ def phrase_for_sentence(key_phrase, temp_list, pos_tag):
 
         if (temp_list[0] == ',' or temp_list[0] == '.'):
             temp_list = temp_list[1:]
-        if len(temp_list) <= 10:
+        if len(temp_list) <= max_length:
             joined_contracted = ' '.join(temp_list).replace(' , ',',').replace(' .','.').replace(' !','!').replace(" ' ", "'")
             return joined_contracted.replace(' ?','?').replace(' : ',': ').replace(' \'', '\'')
         else:
             return None
 
-def phrases_for_key_phrase(key_phrase, comments):
+def phrases_for_key_phrase(key_phrase, comments, max_length):
         sentences = []
         for comment in comments:
             comment_sentences = tokenize.sent_tokenize(comment)
             for sentence in comment_sentences:
                 tokenized = wordpunct_tokenize(unicode(sentence, errors='ignore'))
                 if key_phrase in tokenized:
-                    phrase = phrase_for_sentence(key_phrase, tokenized, nltk.pos_tag(tokenized))
+                    phrase = phrase_for_sentence(key_phrase, tokenized, nltk.pos_tag(tokenized), max_length)
                     if phrase is not None:
                         sentences.append(phrase)
         return sentences

@@ -407,7 +407,7 @@ def group_sentences(sentences):
 # sentiment analysis
 
 class SentimentAnalysis:
-    def __init__(self):
+    def __init__(self, positive, negative):
         """ initializes SentimentAnalysis object by loading the polarity lexicon into memory """
         f = open('sentiment-dictionary.tff', 'r')
         lines = f.readlines()
@@ -431,6 +431,11 @@ class SentimentAnalysis:
             else:
                 strength = 1.0
             dictionary[word] = polarity * strength
+        for word in positive:
+            dictionary[word] = 2.0
+        for word in negative:
+            dictionary[word] = -2.0
+
         self.dictionary = dictionary
 
     def positivity(self, sentence):
@@ -453,14 +458,14 @@ class SentimentAnalysis:
         return positivity
 
 
-def analyze(phrases):
+def analyze(phrases, positive, negative):
     """
     :type phrases: string list
     :param phrases: list of phrases to analyze
     :return: tuple (string list, int) list: the string list are similar phrases, the int
              is 0, -1, and 1 for neutral, negative, and positive, respectively.
     """
-    analyzer = SentimentAnalysis()
+    analyzer = SentimentAnalysis(positive, negative)
     groups = group_sentences(phrases)
     to_return = []
     for index, group in enumerate(groups):
