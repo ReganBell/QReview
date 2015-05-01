@@ -68,7 +68,9 @@ def phrase_for_sentence(key_phrase, temp_list, pos_tag):
                             temp_list = temp_list[:wp_index]
                 except IndexError:
                     return None
-            # print temp_list
+
+        if (temp_list[0] == ',' or temp_list[0] == '.'):
+            temp_list = temp_list[1:]
         if len(temp_list) <= 10:
             joined_contracted = ' '.join(temp_list).replace(' , ',',').replace(' .','.').replace(' !','!').replace(" ' ", "'")
             return joined_contracted.replace(' ?','?').replace(' : ',': ').replace(' \'', '\'')
