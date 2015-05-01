@@ -27,13 +27,13 @@ def lowercase_tokenize(string):
     return [token.lower() for token in raw_tokens]
 
 
-def find_key_phrases(tokens, parts_of_speech, window, calc, doc):
+def find_key_phrases(tokens, parts_of_speech, window):
 
     tagged_tokens = nltk.pos_tag(tokens)
 
     nodes = []
     for token in tokens:
-        nodes += (token, calc.word_tf_idf_in_doc(token, doc))
+         nodes.append((token, 1))
 
     edges = []
     for i in range(0, len(tagged_tokens)):
@@ -42,10 +42,10 @@ def find_key_phrases(tokens, parts_of_speech, window, calc, doc):
             for j in range(i+1, right):
                 vertex = (tokens[i], tokens[j], {"weight": 1})
                 edges += [vertex]
-    return pagerank(edges, 0.15, 15)
+    return pagerank(nodes, edges, 0.15, 15)
 
 
-def key_phrases_for_course(course, parts_of_speech, window, stop_words, min_keyword_length, calc, doc):
+def key_phrases_for_course(course, parts_of_speech, window, stop_words, min_keyword_length):
 
     words = {}
     all_tokens = []
