@@ -91,3 +91,13 @@ def phrases_for_key_phrase(key_phrase, comments):
                     if phrase is not None:
                         sentences.append(phrase)
         return sentences
+
+def get_key_sentences(key_phrase, comments):
+        sentences = []
+        for comment in comments:
+            comment_sentences = tokenize.sent_tokenize(comment)
+            for sentence in comment_sentences:
+                tokenized = wordpunct_tokenize(unicode(sentence, errors='ignore'))
+                if key_phrase in tokenized:
+                        sentences.append(sentence)
+        return sentences

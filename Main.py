@@ -1,6 +1,6 @@
 from TextRank import key_phrases_for_course
 import nltk
-from commentsearching import phrases_for_key_phrase
+from commentsearching import phrases_for_key_phrase, get_key_sentences
 import sys
 reload(sys)
 sys.setdefaultencoding("utf-8")
@@ -33,17 +33,27 @@ for course_num, course in enumerate(courses):
     # Nouns and adjectives, run nltk.help.upenn_tagset() to see all possible tags
     pos = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS"]
     window = 2
+    sentences = []
     custom_stop = ["course", "class", "this", "will", "in", "you", "make", "sure", "expect"]
     min_keyword_len = 4
     key_phrases = key_phrases_for_course(course, pos, window, custom_stop, min_keyword_len)
     print course_num, course[0]
     key_sentences = set()
+
     for key_phrase in key_phrases:
         phrases = phrases_for_key_phrase(key_phrase, course[1])
+        sentences += get_key_sentences(key_phrase, course[1])
         for phrase in phrases:
             if len(phrase) > 1:
                 key_sentences.add(phrase)
     groups = analyze(list(key_sentences))
+
+    # autosummarization
+    paragraph = ""
+    sentences_set = set(sentences[0:5])
+    for sent in sentences_set:
+        paragraph += (sent + " ")
+    print paragraph
 
     pros = []
     cons = []
