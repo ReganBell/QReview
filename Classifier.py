@@ -1,17 +1,18 @@
 from collections import defaultdict
 from nltk.corpus import stopwords
-import math
-import re
+from math import log, exp
+from re import split
 
 positivity_files = [('rt-polarity.neg', False), ('rt-polarity.pos', True)]
 subjectivity_files = [('plot.tok.gt9.5000', False), ('quote.tok.gt9.5000', True)]
 
+
 class Classifier:
     def __init__(self):
-        self.load_dictionary(positivity_files, 0)
-        self.load_dictionary(subjectivity_files, 1)
+        self.train(positivity_files, 0)
+        self.train(subjectivity_files, 1)
 
-    def load_dictionary(self, files, switch):
+    def train(self, files, switch):
         vocabulary = set()
         one_count_dict = defaultdict(float)
         zero_count_dict = defaultdict(float)
@@ -62,7 +63,7 @@ class Classifier:
 
     def evaluate(self, sentence, switch):
         stop_words = stopwords.words('english')
-        words = re.split("[ .?!]", sentence)
+        words = filter(None, split("[^a-zA-Z0-9'_]", sentence))
         if switch == 0:
             vocabulary = self.polar_vocab
             one_word_count = self.pos_word_count
@@ -85,29 +86,8 @@ class Classifier:
             if not (word in stop_words):
                 if (len(word) > 2) & (word in vocabulary):
                     num_words += 1
-                    prob_one += math.log(one_prob_dict.setdefault(word, 1.0/total_one_words))
-                    prob_zero += math.log(zero_prob_dict.setdefault(word, 1.0/total_zero_words))
-        prob_one = math.exp(prob_one)
-        prob_zero = math.exp(prob_zero)
+                    prob_one += log(one_prob_dict.setdefault(word, 1.0/total_one_words))
+                    prob_zero += log(zero_prob_dict.setdefault(word, 1.0/total_zero_words))
+        prob_one = exp(prob_one)
+        prob_zero = exp(prob_zero)
         return (prob_one - prob_zero) / (prob_one + prob_zero)
-
-"""
-    def subjectivity(self, sentence):
-        stop_words = stopwords.words('english')
-        words = sentence.split(" ")
-        total_pos_words = self.pos_word_count + len(self.polar_vocab)
-        total_neg_words = self.neg_word_count + len(self.polar_vocab)
-        p = 0
-        n = 0
-        num_words = 0
-        for word in words:
-            word = word.lower()
-            if not (word in stop_words):
-                if word in self.polar_vocab:
-                    num_words += 1
-                    p += math.log(self.pos_prob_dict.setdefault(word, 1.0/total_pos_words))
-                    n += math.log(self.neg_prob_dict.setdefault(word, 1.0/total_neg_words))
-        p = math.exp(p)
-        n = math.exp(n)
-        return (p - n) / (p + n)
-"""
