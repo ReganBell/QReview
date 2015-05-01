@@ -34,11 +34,6 @@ analyzer = Analyze.SentimentAnalysis(positive, negative)
 
 for course_num, course in enumerate(courses):
 
-    if course_num < 150:
-        continue
-
-    comments = course[1]
-
     # Nouns and adjectives, run nltk.help.upenn_tagset() to see all possible tags
     # pos = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS"]
     pos = ["NN", "NNP", "NNPS", "NNS"]

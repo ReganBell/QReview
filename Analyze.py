@@ -355,8 +355,8 @@ class SentimentAnalysis:
                 else:
                     pos = 0
                 to_return.append((group, pos))
-        for group, pos in to_return:
-            print pos, group
+        #for group, pos in to_return:
+            #print pos, group
         return to_return
 
 def run():
