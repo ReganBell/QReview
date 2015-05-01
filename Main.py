@@ -44,6 +44,8 @@ for course_num, course in enumerate(courses):
     min_keyword_len = 4
 
     key_phrases = key_phrases_for_course(course, pos, window, custom_stop, min_keyword_len)
+    if len(key_phrases) > 100:
+    continue
     groups = []
     for key_phrase in key_phrases:
         phrases = phrases_for_key_phrase(key_phrase, course[1], 15)
