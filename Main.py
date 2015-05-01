@@ -4,6 +4,7 @@ from commentsearching import sentences_for_key_phrase
 from TFIDFCalculator import TFIDFCalculator
 import cProfile
 import re
+import
 
 def parse_course_file(path):
 
@@ -36,6 +37,7 @@ for course in courses:
     key_phrases = key_phrases_for_course(course, pos, window, custom_stop, min_keyword_len)
     for key_phrase in key_phrases:
         sentences = sentences_for_key_phrase(key_phrase, course[1])
+        print sentences
 
     print course[0]
     print key_phrases

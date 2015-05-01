@@ -35,35 +35,40 @@ def tsplit(string, delimiters):
 
 def sentences_for_key_phrase(key_phrase, comments):
 
+    sentences = []
+
     for comment in comments:
         comment_sentences = tokenize.sent_tokenize(comment)
         for sentence in comment_sentences:
-            if key_phrase in sentence: # sentences_w_keywords.append(sentence)
-                temp_list = wordpunct_tokenize(sentence)
+            temp_list = wordpunct_tokenize(sentence)
+            if key_phrase in temp_list: # sentences_w_keywords.append(sentence)
                 for wordpunct in temp_list:
                     for wp in temp_list:
                         if wp.find(key_phrase) != -1:
                             key_index = temp_list.index(wp)
                         elif ' ' or '/' or '-' in key_phrase:
+                            #print key_phrase, temp_list
                             key_index = temp_list.index(tsplit(key_phrase, (',', '.', '/', '-'))[0])
-                    print wordpunct, temp_list
+                    #print wordpunct, temp_list
                     if temp_list.__contains__(wordpunct):
                         wp_index = temp_list.index(wordpunct)
                     else:
                         break
-                    if wordpunct == ',' or '.' or ':' or ';' or '!' or '?':
+                    if wordpunct == (',' or '.' or ':' or ';' or '!' or '?'):
                         if wp_index < key_index:
                             temp_list = temp_list[wp_index:]
                         else:
                             temp_list = temp_list[:wp_index]
-                            print temp_list
+                            #print temp_list
                     else:
                         pos_tag = nltk.pos_tag(temp_list)
                         if pos_tag[wp_index][1] == 'CC':
-                            print pos_tag[wp_index][1], wordpunct, wp_index, key_index
+                            #print pos_tag[wp_index][1], wordpunct, wp_index, key_index
                             if (wp_index < key_index and temp_list[wp_index-1] == (',' or '.' or ':' or '!' or '?')):
                                 temp_list = temp_list[(wp_index+1):]
                             elif (temp_list[wp_index-1] == (',' or '.' or ':' or '!' or '?')):
                                 temp_list = temp_list[:wp_index]
                     # print temp_list
-                print(temp_list)
+                joined_contracted = ' '.join(temp_list).replace(' , ',',').replace(' .','.').replace(' !','!')
+                sentences += [joined_contracted.replace(' ?','?').replace(' : ',': ').replace(' \'', '\'')]
+    return sentences

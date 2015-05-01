@@ -65,8 +65,12 @@ def key_phrases_for_course(course, parts_of_speech, window, stop_words, min_keyw
     for word in top_third_words:
         top_words_dict.update({word: words[word]})
     phrases = collapse_key_phrases(all_tokens, top_words_dict)
+    no_punct_phrases = {}
+    for phrase in phrases:
+        if not ("-" in phrase or "/" in phrase):
+            no_punct_phrases[phrase] = phrases[phrase]
 
-    return sorted(phrases, key=words.get, reverse=True)
+    return sorted(no_punct_phrases, key=words.get, reverse=True)
 
 
 def collapse_key_phrases(tokens, key_words):
