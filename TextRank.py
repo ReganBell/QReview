@@ -26,6 +26,10 @@ def lowercase_tokenize(string):
     raw_tokens = nltk.word_tokenize(string)
     return [token.lower() for token in raw_tokens]
 
+"""
+Given a list of tokens and a list of parts of speech to accept, find key phrases by creating edges within n="window"
+words and running PageRank on the resulting graph
+"""
 
 def find_key_phrases(tokens, parts_of_speech, window):
 
@@ -44,7 +48,10 @@ def find_key_phrases(tokens, parts_of_speech, window):
                 edges += [vertex]
     return pagerank(nodes, edges, 15)
 
-
+"""
+Find key phrases by running TextRank on each comment, finding multi-word keyphrases, and sorting to find
+top key phrases across all comments
+"""
 def key_phrases_for_course(course, parts_of_speech, window, stop_words, min_keyword_length):
 
     words = {}
@@ -72,7 +79,10 @@ def key_phrases_for_course(course, parts_of_speech, window, stop_words, min_keyw
 
     return sorted(no_punct_phrases, key=words.get, reverse=True)
 
-
+"""
+Identify multi-word keyphrases, assuming that two words that are adjacent in the text and that are also top-ranked
+keyphrases are probably part of the same phrase e.g., "behavioral economics" "Professor Morrissett"
+"""
 def collapse_key_phrases(tokens, key_words):
 
     collapsed = {}

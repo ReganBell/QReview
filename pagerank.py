@@ -8,20 +8,9 @@ Q Comment Summarization
 # Import modules
 import networkx as nx
 
-'''
-We import the NetworkX library to use their DiGraph (directed graph) for our PageRank algorithm.
-'''
-
-
-def pagerank(node_list, edge_list, alpha, iteration_limit):
-    '''node_list = [("test", 0.9), ("midterm", 2.1), ("exam", 1.4), ("professor", 0.5), ("music", 1.9), ("teacher", 2.9)]
-    edge_list = [("test", "midterm", {'weight': 0.9}), ("test", "exam", {'weight': 0.8}), ("test", "professor", {'weight': 0.7}),
-                     ("test", "teacher", {'weight': 0.8}), ("test", "music", {'weight': 0.6}), ("exam", "midterm", {'weight': 0.2}), ("professor", "midterm", {'weight': 0.2}),
-                     ("midterm", "teacher", {'weight': 0.0}), ("midterm", "music", {'weight': 0.1}), ("professor", "exam", {'weight': 0.2}), ("exam", "teacher", {'weight': 0.2}),
-                     ("exam", "music", {'weight': 0.5}),("professor", "teacher", {'weight': 0.2}), ("professor", "music", {'weight': 0.5}),
-                     ("teacher", "music", {'weight': 0.5})]'''
+def pagerank(node_list, edge_list, iteration_limit):
     graph = create_graph(node_list, edge_list)
-    ranked_graph = rank_graph(graph, alpha, iteration_limit)
+    ranked_graph = rank_graph(graph, iteration_limit)
     ranked_nodes = {}
     for key in ranked_graph.node:
         value = ranked_graph.node[key]['weight']
@@ -31,15 +20,13 @@ def pagerank(node_list, edge_list, alpha, iteration_limit):
 
 """
 PageRank implementation
-Will not implement random surfer now, might want to later...
+The function uses the edge weights between nodes to calculate new values for each iteration.
 """
 
-
-def rank_graph(graph, alpha, propagation_cycles):
+def rank_graph(graph, propagation_cycles):
 
     temp_graph = graph
     prop_count = 0
-    # dampening = 1 - alpha
 
     while prop_count < propagation_cycles:
 
@@ -59,7 +46,6 @@ def rank_graph(graph, alpha, propagation_cycles):
 
 # Normalize node values
 def normalize(graph):
-
     total_value = 0.0
     for node in graph.__iter__():
         total_value += graph.node[node]['weight']
@@ -67,13 +53,11 @@ def normalize(graph):
         graph.node[node]['weight'] = graph.node[node]['weight']/total_value
     return graph
 
-
+# Create the pagerank graph from lists of weighted nodes and edges
 def create_graph(node_list, edge_list):
     graph = nx.Graph()
     for node in node_list:
-        graph.add_node(node[0], weight = (node[1]))
+        graph.add_node(node[0], weight=(node[1]))
     for edge in edge_list:
         graph.add_edge(*edge)
     return graph
-
-pg = pagerank([], [], 0.15, 100)
