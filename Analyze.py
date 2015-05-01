@@ -14,7 +14,6 @@ from nltk.corpus import wordnet
 
 import Classifier
 import HelperDicts
-import TextRank
 
 # helper methods for sentence similarity
 
@@ -246,7 +245,7 @@ def group_sentences_helper(sentence_groups):
     :param sentence_groups: list of lists (groups) of sentences
     :return: a fully consolidated group of sentence groups (similar groups are combined)
     """
-    threshold = 0.5
+    threshold = 0.6
     max_similarity = 0
     first_index = None
     second_index = None
@@ -315,7 +314,11 @@ class SentimentAnalysis:
         words = split_sentence(sentence)
         positivity = 0
         for index, word in enumerate(words):
-            polarity = self.dictionary.get(word, 0)
+            polarity = self.dictionary.get(word, None)
+            if polarity is None:
+                stemmer = EnglishStemmer()
+                stemmed = stemmer.stem(word)
+                polarity = self.dictionary.get(stemmed, 0)
             if polarity != 0:
                 if word == keyword:
                     polarity *= 2.0
@@ -324,59 +327,37 @@ class SentimentAnalysis:
                 positivity += polarity
         return positivity
 
-def run():
-    sentences = ["The cat jumped over the moon","The feline leaped above the lunar object", "The teacher likes to eat apples",
-                 "The educator enjoys eating fruit","My brother climbs the wall", "Fat people eat cake"]
 
-    classifier = Classifier.Classifier()
+def analyze(keyword, phrases):
+    """
+    :type keyword: string
+    :type phrases: string list
+    :param phrases: list of phrases to analyze
+    :return: tuple (string list, int) list: the string list are similar phrases, the int
+             is 0, -1, and 1 for neutral, negative, and positive, respectively.
+    """
     analyzer = SentimentAnalysis()
+    groups = group_sentences(phrases)
+    to_return = []
+    for index, group in enumerate(groups):
+        positivity = 0.0
+        for phrase in group:
+            positivity += analyzer.positivity(phrase, keyword)
+        average_positivity = positivity / ((1.0) * len(group))
+        if average_positivity >= 1:
+            pos = 1
+        elif average_positivity <= -1:
+            pos = -1
+        else:
+            pos = 0
+        to_return.append((group, pos))
+    return to_return
 
-    courses = TextRank.parse_course_file("2014QComments")
-    for index, course in enumerate(courses[0:3]):
-        # Nouns and adjectives, run nltk.help.upenn_tagset() to see all possible tags
-        parts_of_speech = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS"]
-        window = 2
-        custom_stop_words = ["course", "class"]
-        min_keyword_length = 2
-        key_phrases = TextRank.key_phrases_for_course(course, parts_of_speech, window, custom_stop_words, min_keyword_length)
-        print index+1, course[0]
-        for key_phrase in key_phrases:
-            phrases = []
-            sentences = []
-            for comment in course[1]:
-                for sentence in re.split("[.?!]", comment):
-                    key_phrase_indices = []
-                    words = split_sentence(sentence)
-                    for index, word in enumerate(words):
-                        if word == key_phrase:
-                            sentences.append(sentence)
-                            key_phrase_indices.append(index)
-                    for index in key_phrase_indices:
-                        lower_index = index - 5
-                        upper_index = index + 5
-                        if lower_index < 0:
-                            lower_index = 0
-                        if upper_index > len(words):
-                            upper_index = len(words)
-                        phrase = ' '.join(words[lower_index:upper_index])
-                        phrases.append(phrase)
-            if (len(sentences) > 1):
-                print "key phrase:", key_phrase
-                for p in phrases:
-                    print p
-                groups = group_sentences(phrases)
-                for group in groups:
-                    total_subjectivity = 0.0
-                    total_positivity_classifier = 0.0
-                    total_positivity_analyzer = 0.0
-                    sentence_group = []
-                    for p in group:
-                        s = sentences[phrases.index(p)]
-                        sentence_group.append(s)
-                        total_subjectivity += classifier.subjectivity(p)
-                        total_positivity_classifier += classifier.positivity(p)
-                        total_positivity_analyzer += analyzer.positivity(p)
-                    print "{0:.2f} {1:.2f} {2} {3}".format((total_subjectivity/len(group)), (total_positivity_classifier / len(group)), (total_positivity_analyzer / len(group)), sentence_group)
-                print
+
+def run():
+    sentences = ["The big cat jumped over the moon","The big feline leaped above the lunar object", "The teacher likes to eat big apples",
+                 "The big educator enjoys eating fruit","My brother climbs the big wall", "Big fat people eat cake"]
+    print analyze("big", sentences)
+
 
 run()
