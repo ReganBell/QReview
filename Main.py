@@ -22,11 +22,11 @@ def parse_course_file(path):
 
     return courses
 
-'''
+"""
 nltk.download('punkt')
 nltk.download('stopwords')
 nltk.download('maxent_treebank_pos_tagger')
-'''
+"""
 
 courses = parse_course_file("2014QComments")
 positive = ["doable"]
@@ -46,7 +46,7 @@ for course_num, course in enumerate(courses):
     key_phrases = key_phrases_for_course(course, pos, window, custom_stop, min_keyword_len)
     groups = []
     for key_phrase in key_phrases:
-        phrases = phrases_for_key_phrase(key_phrase, course[1], 12)
+        phrases = phrases_for_key_phrase(key_phrase, course[1], 15)
         phrases = filter(lambda d: len(d) > 1, phrases)
         grps = analyzer.analyze(phrases)
         if len(grps) > 0:
@@ -75,7 +75,7 @@ for course_num, course in enumerate(courses):
                         if sentence == sentence2:
                             grp.remove(sentence)
 
-    # autosummarization
+    # auto summarization
     paragraph = ""
     sentences_set = set(sentences[0:5])
     for sent in sentences_set:
@@ -93,16 +93,21 @@ for course_num, course in enumerate(courses):
 
     if (len(pros) is not 0) or (len(cons) is not 0):
         print course[0]
+        print "Summary:", paragraph
         print "Found %d key sentences" % len(sentences)
 
-        print "Paragraph:", paragraph
+        if len(pros) > 0:
+            print ""
+            print "Pros:"
+            for pro in pros:
+                print "%s (in %d comment%s)" % (pro[0], len(pro), "s" if len(pro) > 1 else "")
 
-        print "Pros"
-        for pro in pros:
-            print "%s (in %d comment%s)" % (pro[0], len(pro), "s" if len(pro) > 1 else "")
+        if len(cons) > 0:
+            print ""
+            print "Cons:"
+            for con in cons:
+                print "%s (in %d comment%s)" % (con[0], len(con), "s" if len(con) > 1 else "")
 
-        print "Cons"
-        for con in cons:
-            print "%s (in %d comment%s)" % (con[0], len(con), "s" if len(con) > 1 else "")
-
+        print ""
+        print "-------------------------------------------------------------------------------------------"
         print ""
