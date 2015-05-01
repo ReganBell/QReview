@@ -261,14 +261,7 @@ def group_sentences(sentences):
             if r == c:
                 group.append(sentences[c])
             elif val == 1:
-                matches.append((r, c))
-        for i, (r1, c1) in enumerate(matches):
-            similar_to_rest = True
-            for r2, c2 in matches[(i+1):]:
-                if matrix[c1][c2] != 1:
-                    similar_to_rest = False
-            if similar_to_rest:
-                group.append(sentences[c1])
+                group.append(sentences[c])
         groups.append(group)
     to_return = []
     while len(groups) > 0:
@@ -277,7 +270,7 @@ def group_sentences(sentences):
         for group in groups:
             if len(group) > longest_group:
                 longest_group = len(group)
-                to_add= group
+                to_add = group
         groups.remove(to_add)
         for sentence in to_add:
             for group in groups:
@@ -357,6 +350,8 @@ class SentimentAnalysis:
                 else:
                     pos = 0
                 to_return.append((group, pos))
+        for group, pos in to_return:
+            print pos, group
         return to_return
 
 
