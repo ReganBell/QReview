@@ -7,6 +7,7 @@ Q Comment Summarization
 
 from re import split
 from math import sqrt, exp
+import time
 
 from nltk.stem.snowball import EnglishStemmer
 from nltk.corpus.reader.wordnet import Lemma
@@ -272,10 +273,83 @@ def group_sentences_helper(sentence_groups):
     else:
         return sentence_groups
 
+"""
+def group_sentences(sentences):
+    num_sentences = len(sentences)
+    if len(sentences) > 4:
+        halfway = num_sentences / 2
+        group_first_half = group_sentences_helper([[s] for s in sentences[:halfway]])
+        group_second_half = group_sentences_helper([[s] for s in sentences[halfway:]])
+        return group_sentences_helper(group_first_half + group_second_half)
+    else:
+        return group_sentences_helper([[s] for s in sentences])
+"""
+
 
 def group_sentences(sentences):
-    return group_sentences_helper([[s] for s in sentences])
+    groups = []
+    matrix = [[1 if (s1 == s2) or (sentence_similarity(s1, s2) > 0.6) else 0 for s1 in sentences] for s2 in sentences]
+    for r, row in enumerate(matrix):
+        group = []
+        matches = []
+        for c, val in enumerate(row):
+            if val == 1:
+                if r == c:
+                    group.append(sentences[c])
+                else:
+                    matches.append((r, c))
+        for i, (r1, c1) in enumerate(matches):
+            similar_to_rest = True
+            for r2, c2 in matches[(i+1):]:
+                if matrix[c1][c2] != 1:
+                    similar_to_rest = False
+            if similar_to_rest:
+                group.append(sentences[c1])
+        groups.append(group)
+    to_return = []
+    while len(groups) > 0:
+        longest_group = 0
+        to_add = []
+        for group in groups:
+            if len(group) > longest_group:
+                longest_group = len(group)
+                to_add= group
+        groups.remove(to_add)
+        for sentence in to_add:
+            for group in groups:
+                if sentence in group:
+                    group.remove(sentence)
+        to_return.append(to_add)
+    return to_return
 
+
+'''
+def group_sentences(sentences):
+    groups = []
+    matrix = [[sentence_similarity(s1, s2) for s1 in sentences] for s2 in sentences]
+    for row in matrix:
+        print row
+    highest_score = 0
+    highest_row = None
+    highest_col = None
+    groups =[]
+    while True:
+        for r, row in enumerate(matrix):
+            for c, val in enumerate(row):
+                together = False
+                for group in groups:
+                    if (r in group) & (c in group):
+                        together = True
+                if not together:
+
+                    if val > highest_score:
+                        highest_score = val
+                        highest_row = r
+                        highest_col = c
+                        groups.append([r,c])
+        if highest_score < 0.6:
+            break
+'''
 
 # sentiment analysis
 
@@ -306,7 +380,7 @@ class SentimentAnalysis:
             dictionary[word] = polarity * strength
         self.dictionary = dictionary
 
-    def positivity(self, sentence, keyword=""):
+    def positivity(self, sentence):
         """
         :type sentence: string
         :return: int: sign indicates positivity of given sentence, magnitude indicates strength (0 is neutral)
@@ -320,17 +394,14 @@ class SentimentAnalysis:
                 stemmed = stemmer.stem(word)
                 polarity = self.dictionary.get(stemmed, 0)
             if polarity != 0:
-                if word == keyword:
-                    polarity *= 2.0
                 if (index > 0):
                     polarity *= HelperDicts.modifier(words[index - 1])
                 positivity += polarity
         return positivity
 
 
-def analyze(keyword, phrases):
+def analyze(phrases):
     """
-    :type keyword: string
     :type phrases: string list
     :param phrases: list of phrases to analyze
     :return: tuple (string list, int) list: the string list are similar phrases, the int
@@ -342,22 +413,24 @@ def analyze(keyword, phrases):
     for index, group in enumerate(groups):
         positivity = 0.0
         for phrase in group:
-            positivity += analyzer.positivity(phrase, keyword)
-        average_positivity = positivity / ((1.0) * len(group))
-        if average_positivity >= 1:
-            pos = 1
-        elif average_positivity <= -1:
-            pos = -1
-        else:
-            pos = 0
-        to_return.append((group, pos))
+            positivity += analyzer.positivity(phrase)
+        if len(group) > 0:
+            average_positivity = positivity / ((1.0) * len(group))
+            if average_positivity >= 1:
+                pos = 1
+            elif average_positivity <= -1:
+                pos = -1
+            else:
+                pos = 0
+            to_return.append((group, pos))
     return to_return
 
 
 def run():
-    sentences = ["The big cat jumped over the moon","The big feline leaped above the lunar object", "The teacher likes to eat big apples",
-                 "The big educator enjoys eating fruit","My brother climbs the big wall", "Big fat people eat cake"]
-    print analyze("big", sentences)
-
+    #sentences = ["The big cat jumped over the moon","The big feline leaped above the lunar object", "The teacher likes to eat big apples",
+    #             "The big educator enjoys eating fruit","My brother climbs the big wall", "Big fat people eat cake"]
+    sentences = ['Yascha is a brilliant writer and a great guy', 'Take this course if you want a good Expos experience', 'Yascha is a great teacher who leads lively discussions', 'This is a very good class for expos', 'Other expos classes could be better', "Make sure that you're very interested in government", "If you're at all interested in technology", 'The essays are difficult but rewarding']
+    start_time = time.time()
+    groups = analyze(sentences)
 
 #run()

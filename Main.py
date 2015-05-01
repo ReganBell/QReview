@@ -1,6 +1,6 @@
 from TextRank import key_phrases_for_course
 import nltk
-from commentsearching import sentences_for_key_phrase
+from commentsearching import phrases_for_key_phrase
 import sys
 reload(sys)
 sys.setdefaultencoding("utf-8")
@@ -22,11 +22,13 @@ def parse_course_file(path):
 
     return courses
 
+'''
 nltk.download('punkt')
 nltk.download('stopwords')
 nltk.download('maxent_treebank_pos_tagger')
+'''
 courses = parse_course_file("2014QComments")
-for course in courses[10:11]:
+for course in courses:
 
     # Nouns and adjectives, run nltk.help.upenn_tagset() to see all possible tags
     pos = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS"]
@@ -35,25 +37,27 @@ for course in courses[10:11]:
     min_keyword_len = 4
     key_phrases = key_phrases_for_course(course, pos, window, custom_stop, min_keyword_len)
     print course[0]
-    key_sentences = []
+    key_sentences = set()
     for key_phrase in key_phrases:
-        sentences = sentences_for_key_phrase(key_phrase, course[1])
-        groups = analyze(key_phrase, sentences[0:5])
-        if len(groups) > 0:
-            key_sentences += groups
+        phrases = phrases_for_key_phrase(key_phrase, course[1])
+        for phrase in phrases:
+            if len(phrase) > 1:
+                key_sentences.add(phrase)
+    print list(key_sentences)
+    groups = analyze(list(key_sentences))
 
     pros = []
     cons = []
     neutrals = []
 
-    for group in key_sentences:
-        sentences, sentiment = group
+    for group in groups:
+        phrases, sentiment = group
         if sentiment == 1:
-            pros += [sentences]
+            pros += [phrases]
         elif sentiment == -1:
-            cons += [sentences]
+            cons += [phrases]
         else:
-            neutrals += [sentences]
+            neutrals += [phrases]
 
     print "Pros"
     for pro in pros:
