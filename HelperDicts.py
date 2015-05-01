@@ -1,4 +1,9 @@
-__author__ = 'akshaysaini'
+"""
+Matthew Beatty, Regan Bell, Akshay Saini
+CS51 Final Project
+Q Comment Summarization
+4/30/15
+"""
 
 import re
 
@@ -122,9 +127,51 @@ contractions_dict = {
     "you've": "you have"
 }
 
+b_incr = 2
+b_decr = 0.5
+
+degree_mod_dict = {"absolutely": b_incr, "amazingly": b_incr, "awfully": b_incr, "completely": b_incr, "considerably": b_incr,
+                    "decidedly": b_incr, "deeply": b_incr, "effing": b_incr, "enormously": b_incr,
+                    "entirely": b_incr, "especially": b_incr, "exceptionally": b_incr, "extremely": b_incr,
+                    "fabulously": b_incr, "flipping": b_incr, "flippin": b_incr,
+                    "fricking": b_incr, "frickin": b_incr, "frigging": b_incr, "friggin": b_incr, "fully": b_incr, "fucking": b_incr,
+                    "greatly": b_incr, "hella": b_incr, "highly": b_incr, "hugely": b_incr, "incredibly": b_incr,
+                    "intensely": b_incr, "majorly": b_incr, "more": b_incr, "most": b_incr, "particularly": b_incr,
+                    "purely": b_incr, "quite": b_incr, "really": b_incr, "remarkably": b_incr,
+                    "so": b_incr,  "substantially": b_incr,
+                    "thoroughly": b_incr, "totally": b_incr, "tremendously": b_incr,
+                    "uber": b_incr, "unbelievably": b_incr, "unusually": b_incr, "utterly": b_incr,
+                    "very": b_incr,
+
+                    "almost": b_decr, "barely": b_decr, "hardly": b_decr, "just enough": b_decr,
+                    "kinda": b_decr, "kindof": b_decr, "kind-of": b_decr,
+                    "less": b_decr, "little": b_decr, "marginally": b_decr, "occasionally": b_decr, "partly": b_decr,
+                    "scarcely": b_decr, "slightly": b_decr, "somewhat": b_decr,
+                    "sorta": b_decr, "sortof": b_decr, "sort-of": b_decr}
+
+negate_list = ["arent", "cannot", "cant", "couldnt", "darent", "didnt", "doesnt",
+              "dont", "hadnt", "hasnt", "havent", "isnt", "mightnt", "mustnt", "neither",
+              "neednt", "never", "none", "nope", "nor", "not", "nothing", "nowhere",
+              "oughtnt", "shant", "shouldnt", "uhuh", "wasnt", "werent", "uh-uh",
+              "without", "wont", "wouldnt", "rarely", "seldom", "despite"]
+
 contractions_re = re.compile('(%s)' % '|'.join(contractions_dict.keys()))
 
 def expand_contractions(word):
+    """
+    :type word: string
+    :return: string: given word with contractions replaced
+    """
     def replace(match):
         return contractions_dict[match.group(0)]
     return contractions_re.sub(replace, word)
+
+def modifier(word):
+    """
+    :type word: string
+    :return: float: positivity change depending on intensity modifier and negation
+    """
+    if word in negate_list:
+        return -1.0
+    else:
+        return degree_mod_dict.get(word, 1)

@@ -7,14 +7,13 @@ Q Comment Summarization
 
 import re
 import math
-import time
 
 from nltk.stem.snowball import EnglishStemmer
 from nltk.corpus.reader.wordnet import Lemma
 from nltk.corpus import wordnet
 
 import Classifier
-import Contractions
+import HelperDicts
 import TextRank
 
 # helper methods for sentence similarity
@@ -157,7 +156,7 @@ def split_sentence(sentence):
     words = map(lambda s: s.lower(), filter(None, re.split("[^a-zA-Z0-9'_]", sentence)))
     to_return = []
     for word in words:
-        to_return += Contractions.expand_contractions(word).split(" ")
+        to_return += HelperDicts.expand_contractions(word).split(" ")
     return to_return
 
 
@@ -241,7 +240,7 @@ def sentence_similarity(sentence1, sentence2):
     return similarity
 
 
-def group_sentences(sentence_groups):
+def group_sentences_helper(sentence_groups):
     """
     :type sentence_groups: string list list
     :param sentence_groups: list of lists (groups) of sentences
@@ -270,9 +269,13 @@ def group_sentences(sentence_groups):
             if (index != first_index) & (index != second_index):
                 new_sentence_groups.append(sentence_group)
         new_sentence_groups.append(sentence_groups[first_index] + sentence_groups[second_index])
-        return group_sentences(new_sentence_groups)
+        return group_sentences_helper(new_sentence_groups)
     else:
         return sentence_groups
+
+
+def group_sentences(sentences):
+    return group_sentences_helper([[s] for s in sentences])
 
 
 # sentiment analysis
@@ -289,18 +292,18 @@ class SentimentAnalysis:
             word = tokens[2].split('=')[1]
             polarity_string = tokens[5].split('=')[1]
             if polarity_string == "positive":
-                polarity = 1
+                polarity = 1.0
             elif polarity_string == "negative":
-                polarity = -1
+                polarity = -1.0
             else:
-                polarity = 0
+                polarity = 0.0
             subj = tokens[0].split('=')[1]
             if subj == 'strongsubj':
-                strength = 2
+                strength = 2.0
             elif subj == 'weaksubj':
-                strength = 1
+                strength = 1.0
             else:
-                strength = 1
+                strength = 1.0
             dictionary[word] = polarity * strength
         self.dictionary = dictionary
 
@@ -311,15 +314,13 @@ class SentimentAnalysis:
         """
         words = split_sentence(sentence)
         positivity = 0
-        stemmer = EnglishStemmer()
         for index, word in enumerate(words):
-            stemmed = stemmer.stem(word)
-            polarity = self.dictionary.get(stemmed, 0)
-            if word == keyword:
-                polarity *= 2
-            if (index > 0) & (words[index - 1] == "not"):
-                positivity -= polarity
-            else:
+            polarity = self.dictionary.get(word, 0)
+            if polarity != 0:
+                if word == keyword:
+                    polarity *= 2.0
+                if (index > 0):
+                    polarity *= HelperDicts.modifier(words[index - 1])
                 positivity += polarity
         return positivity
 
@@ -363,10 +364,19 @@ def run():
                 print "key phrase:", key_phrase
                 for p in phrases:
                     print p
-                groups = group_sentences([[p] for p in phrases])
+                groups = group_sentences(phrases)
                 for group in groups:
-                   print group
-                print ""
-
+                    total_subjectivity = 0.0
+                    total_positivity_classifier = 0.0
+                    total_positivity_analyzer = 0.0
+                    sentence_group = []
+                    for p in group:
+                        s = sentences[phrases.index(p)]
+                        sentence_group.append(s)
+                        total_subjectivity += classifier.subjectivity(p)
+                        total_positivity_classifier += classifier.positivity(p)
+                        total_positivity_analyzer += analyzer.positivity(p)
+                    print "{0:.2f} {1:.2f} {2} {3}".format((total_subjectivity/len(group)), (total_positivity_classifier / len(group)), (total_positivity_analyzer / len(group)), sentence_group)
+                print
 
 run()
