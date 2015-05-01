@@ -245,7 +245,7 @@ def group_sentences_helper(sentence_groups):
     :param sentence_groups: list of lists (groups) of sentences
     :return: a fully consolidated group of sentence groups (similar groups are combined)
     """
-    threshold = 0.6
+    threshold = 0.5
     max_similarity = 0
     first_index = None
     second_index = None
@@ -360,4 +360,4 @@ def run():
     print analyze("big", sentences)
 
 
-run()
+#run()
