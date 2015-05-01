@@ -4,7 +4,7 @@ from commentsearching import phrases_for_key_phrase, get_key_sentences
 import sys
 reload(sys)
 sys.setdefaultencoding("utf-8")
-from Analyze import analyze
+import Analyze
 
 def parse_course_file(path):
 
@@ -28,25 +28,31 @@ nltk.download('stopwords')
 nltk.download('maxent_treebank_pos_tagger')
 '''
 courses = parse_course_file("2014QComments")
+positive = ["doable"]
+negative = ["difficult", "hard", "work"]
+analyzer = Analyze.SentimentAnalysis(positive, negative)
+
 for course_num, course in enumerate(courses):
 
     # Nouns and adjectives, run nltk.help.upenn_tagset() to see all possible tags
-    pos = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS"]
+    # pos = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS"]
+    pos = ["NN", "NNP", "NNPS", "NNS"]
     window = 2
     sentences = []
     custom_stop = ["course", "class", "this", "will", "in", "you", "make", "sure", "expect"]
     min_keyword_len = 4
-    key_phrases = key_phrases_for_course(course, pos, window, custom_stop, min_keyword_len)
-    print course_num, course[0]
+    key_phrases = key_phrases_for_course(course, pos, window, custom_stop, min_keyword_len)[:5]
     key_sentences = set()
 
     for key_phrase in key_phrases:
-        phrases = phrases_for_key_phrase(key_phrase, course[1])
+        phrases = phrases_for_key_phrase(key_phrase, course[1], 12)
         sentences += get_key_sentences(key_phrase, course[1])
         for phrase in phrases:
             if len(phrase) > 1:
                 key_sentences.add(phrase)
-    groups = analyze(list(key_sentences))
+
+
+    groups = analyzer.analyze(list(key_sentences))
 
     # autosummarization
     paragraph = ""
@@ -57,7 +63,6 @@ for course_num, course in enumerate(courses):
 
     pros = []
     cons = []
-    neutrals = []
 
     for group in groups:
         phrases, sentiment = group
@@ -65,21 +70,17 @@ for course_num, course in enumerate(courses):
             pros += [phrases]
         elif sentiment == -1:
             cons += [phrases]
-        else:
-            neutrals += [phrases]
 
-    print "Pros"
-    for pro in pros:
-        print "%s (in %d comment%s)" % (pro[0], len(pro), "s" if len(pro) > 1 else "")
+    if len(pros) is not 0 and len(cons) is not 0:
+        print course[0]
+        print "Found %d key sentences" % len(key_sentences)
+
+        print "Pros"
+        for pro in pros:
+            print "%s (in %d comment%s)" % (pro[0], len(pro), "s" if len(pro) > 1 else "")
+
+        print "Cons"
+        for con in cons:
+            print "%s (in %d comment%s)" % (con[0], len(con), "s" if len(con) > 1 else "")
 
 
-    print "Cons"
-    for con in cons:
-        print "%s (in %d comment%s)" % (con[0], len(con), "s" if len(con) > 1 else "")
-
-
-    print "Neutral"
-    for neutral in neutrals:
-        print "%s (in %d comment%s)" % (neutral[0], len(neutral), "s" if len(neutral) > 1 else "")
-
-    print ""
