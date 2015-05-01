@@ -42,8 +42,6 @@ for course_num, course in enumerate(courses):
     custom_stop = ["course", "class", "this", "will", "in", "you", "make", "sure", "expect"]
     min_keyword_len = 4
     key_phrases = key_phrases_for_course(course, pos, window, custom_stop, min_keyword_len)[:5]
-    #print key_phrases
-    #print course_num, course[0]
     key_sentences = set()
     for key_phrase in key_phrases:
         phrases = phrases_for_key_phrase(key_phrase, course[1], 12)
