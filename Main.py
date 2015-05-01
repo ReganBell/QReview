@@ -115,6 +115,6 @@ for course_num, course in enumerate(courses):
                 for con in cons:
                     print "%s (in %d comment%s)" % (con[0], len(con), "s" if len(con) > 1 else "")
 
-            print ""
-            print "-------------------------------------------------------------------------------------------"
-            print ""
+        print ""
+        print "-------------------------------------------------------------------------------------------"
+        print ""
