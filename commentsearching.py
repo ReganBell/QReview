@@ -35,12 +35,14 @@ def tsplit(string, delimiters):
 
 
 def phrase_for_sentence(key_phrase, temp_list, pos_tag):
-
+        print "key phrase:", key_phrase
+        print temp_list
+        print pos_tag
         for wordpunct in temp_list:
             for wp in temp_list:
                 if wp.find(key_phrase) != -1:
                     key_index = temp_list.index(wp)
-                elif '/' or '-' in key_phrase:
+                elif ('/' in key_phrase) or ('-' in key_phrase):
                     #print key_phrase, temp_list
                     key_index = temp_list.index(tsplit(key_phrase, (',', '.', '/', '-', '+'))[0])
             #print wordpunct, temp_list
@@ -72,9 +74,7 @@ def phrase_for_sentence(key_phrase, temp_list, pos_tag):
             return None
 
 def sentences_for_key_phrase(key_phrase, comments):
-
         sentences = []
-
         for comment in comments:
             comment_sentences = tokenize.sent_tokenize(comment)
             for sentence in comment_sentences:
@@ -82,6 +82,5 @@ def sentences_for_key_phrase(key_phrase, comments):
                 if key_phrase in tokenized:
                     phrase = phrase_for_sentence(key_phrase, tokenized, nltk.pos_tag(tokenized))
                     if phrase is not None:
-                        sentences += [phrase]
-
+                        sentences.append(phrase)
         return sentences
