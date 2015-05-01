@@ -1,24 +1,17 @@
 '''
-Matthew Beatty
+Matthew Beatty, Regan Bell, Akshay Saini
 CS51 Final Project
 Q Comment Summarization
 4/22/15
 '''
 
 # Import modules
-import networkx as nx
 from nltk import tokenize
 from nltk.tokenize import wordpunct_tokenize
 import nltk
-import string
 
 
-'''
-We import the NetworkX library to use their DiGraph (directed graph) for our PageRank algorithm.
-
-send in keywords, finds comments that match that
-'''
-
+# Function for splitting string by specific delimiters
 def tsplit(string, delimiters):
 
     delimiters = tuple(delimiters)
@@ -34,13 +27,19 @@ def tsplit(string, delimiters):
     return stack
 
 
+'''
+phase_for_sentence extracts the keyphrase from the target sentence using part of speech tagging.
+'''
+
 def phrase_for_sentence(key_phrase, temp_list, pos_tag):
+        # finds index of the keyphrase in the tokenized word list
         for wp in temp_list:
             if wp.find(key_phrase) != -1:
                 key_index = temp_list.index(wp)
             elif ('/' in key_phrase) or ('-' in key_phrase):
-                #print key_phrase, temp_list
                 key_index = temp_list.index(tsplit(key_phrase, (',', '.', '/', '-', '+'))[0])
+
+        # checks for punctuations and conjunctions to cut down tokenized word list
         for wp in temp_list:
             if wp in temp_list:
                 wp_index = temp_list.index(wp)
@@ -51,7 +50,6 @@ def phrase_for_sentence(key_phrase, temp_list, pos_tag):
                     temp_list = temp_list[wp_index:]
                 else:
                     temp_list = temp_list[:wp_index]
-                    #print temp_list
             else:
                 try:
                     left = next(i for i, d in enumerate(pos_tag) if temp_list[0] in d)
@@ -61,7 +59,6 @@ def phrase_for_sentence(key_phrase, temp_list, pos_tag):
                 pos_tag = pos_tag[left:right]
                 try:
                     if pos_tag[wp_index][1] == 'CC':
-                        #print pos_tag[wp_index][1], wordpunct, wp_index, key_index
                         if (wp_index < key_index) and ((temp_list[wp_index-1] == ',') or (temp_list[wp_index-1] == '.') or (temp_list[wp_index-1] == ':') or (temp_list[wp_index-1] == '!') or (temp_list[wp_index-1] == '?')):
                             temp_list = temp_list[(wp_index+1):]
                         elif (temp_list[wp_index-1] == ',') or (temp_list[wp_index-1] == '.') or (temp_list[wp_index-1] == ':') or (temp_list[wp_index-1] == '!') or (temp_list[wp_index-1] == '?'):
@@ -69,6 +66,7 @@ def phrase_for_sentence(key_phrase, temp_list, pos_tag):
                 except IndexError:
                     return None
 
+        # final adjustments of keyphrase
         if (temp_list[0] == ',' or temp_list[0] == '.'):
             temp_list = temp_list[1:]
         if len(temp_list) <= 10:
@@ -76,6 +74,11 @@ def phrase_for_sentence(key_phrase, temp_list, pos_tag):
             return joined_contracted.replace(' ?','?').replace(' : ',': ').replace(' \'', '\'')
         else:
             return None
+
+'''
+phrases_for_key_phrase looks through course comments for keywords and then compiles a list of
+the keyphrases from those words.
+'''
 
 def phrases_for_key_phrase(key_phrase, comments):
         sentences = []
