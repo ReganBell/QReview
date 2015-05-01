@@ -19,29 +19,10 @@ import os
 from nltk.corpus import stopwords
 from pagerank import pagerank
 
-
 def lowercase_tokenize(string):
 
     raw_tokens = nltk.word_tokenize(string)
     return [token.lower() for token in raw_tokens]
-
-
-def parse_course_file(path):
-
-    with open(path, "r") as raw:
-        file_string = raw.read()
-
-    course_strings = file_string.split("</course>")
-    courses = []
-
-    for course_string in course_strings:
-        if len(course_string) > 0:
-            title, raw_comments = course_string.split("</title>")
-            comments = raw_comments.split("</comment>")
-            courses += [[title, comments]]
-
-    return courses
-
 
 def find_key_phrases(tokens, parts_of_speech, window):
 
@@ -96,18 +77,3 @@ def collapse_key_phrases(tokens, key_words):
             collapsed.update({left: combined_score})
             j += 1
     return collapsed
-
-nltk.download('punkt')
-nltk.download('stopwords')
-nltk.download('maxent_treebank_pos_tagger')
-courses = parse_course_file("2014QComments")
-for course in courses:
-
-    # Nouns and adjectives, run nltk.help.upenn_tagset() to see all possible tags
-    parts_of_speech = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS"]
-    window = 2
-    custom_stop_words = ["course", "class", "this", "will", "in", "you", "make", "sure", "expect"]
-    min_keyword_length = 4
-    key_phrases = key_phrases_for_course(course, parts_of_speech, window, custom_stop_words, min_keyword_length)
-    print course[0]
-    print key_phrases
