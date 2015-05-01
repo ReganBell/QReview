@@ -6,15 +6,16 @@ Q Comment Summarization
 """
 
 import re
+import math
+import time
 
 from nltk.stem.snowball import EnglishStemmer
 from nltk.corpus.reader.wordnet import Lemma
 from nltk.corpus import wordnet
 
-import math
 import Classifier
 import Contractions
-
+import TextRank
 
 # helper methods for sentence similarity
 
@@ -90,7 +91,7 @@ def get_path_length_and_subsumer_height(word1, word2):
             if concept1.pos() == concept2.pos():
                 # case 1
                 if concept1 == concept2:
-                    return 0, concept1.max_depth()
+                    return 0, 15
                 # case 2
                 words1 = map(Lemma.name, concept1.lemmas())
                 words2 = map(Lemma.name, concept2.lemmas())
@@ -119,6 +120,9 @@ def similarity_score(word1, word2):
     :type word2: string
     :return: float: between 0 and 1; similarity between two given words
     """
+    stemmer = EnglishStemmer()
+    if stemmer.stem(word1) == stemmer.stem(word2):
+        return 1
     alpha = 0.2
     beta = 0.6
     l, h = get_path_length_and_subsumer_height(word1, word2)
@@ -237,22 +241,43 @@ def sentence_similarity(sentence1, sentence2):
     return similarity
 
 
-def similarity_matrix(sentences):
-    matrix = [[]]
-    for row, sentence1 in enumerate(sentences):
-        for col, sentence2 in enumerate(sentences):
-            if sentence1 == sentence2:
-                matrix[row][col] = 0
-            else:
-                matrix[row][col] = sentence_similarity(sentence1, sentence2)
-    print matrix
-
+def group_sentences(sentence_groups):
+    """
+    :type sentence_groups: string list list
+    :param sentence_groups: list of lists (groups) of sentences
+    :return: a fully consolidated group of sentence groups (similar groups are combined)
+    """
+    threshold = 0.5
+    max_similarity = 0
+    first_index = None
+    second_index = None
+    for index1, sentence_group1 in enumerate(sentence_groups):
+        for index2, sentence_group2 in enumerate(sentence_groups):
+            if sentence_group1 != sentence_group2:
+                min_local_similarity = 1
+                for sentence1 in sentence_group1:
+                    for sentence2 in sentence_group2:
+                        similarity = sentence_similarity(sentence1, sentence2)
+                        if similarity < min_local_similarity:
+                            min_local_similarity = similarity
+                if min_local_similarity > max_similarity:
+                    max_similarity = min_local_similarity
+                    first_index = index1
+                    second_index = index2
+    if max_similarity > threshold:
+        new_sentence_groups = []
+        for index, sentence_group in enumerate(sentence_groups):
+            if (index != first_index) & (index != second_index):
+                new_sentence_groups.append(sentence_group)
+        new_sentence_groups.append(sentence_groups[first_index] + sentence_groups[second_index])
+        return group_sentences(new_sentence_groups)
+    else:
+        return sentence_groups
 
 
 # sentiment analysis
 
 class SentimentAnalysis:
-
     def __init__(self):
         """ initializes SentimentAnalysis object by loading the polarity lexicon into memory """
         f = open('sentiment-dictionary.tff', 'r')
@@ -298,36 +323,15 @@ class SentimentAnalysis:
                 positivity += polarity
         return positivity
 
-
-def extract_similar(phrases):
-    similar_group = [[s] for s in phrases]
-    for phrase in phrases[1:]:
-        for group in similar_group:
-            similar = True
-            for sentence1 in group:
-                similarity = sentence_similarity(phrase, sentence1)
-                if similarity < 0.6 or phrase == sentence1:
-                    similar = False
-                    break
-            if similar:
-                group.append(phrase)
-    return similar_group
-
 def run():
-    sentence1 = "They're my best friends"
-    sentence2 = "Those people are my closest companions"
-
-    print "sentence similarity: {0:.3f}".format(sentence_similarity(sentence1, sentence2))
+    sentences = ["The cat jumped over the moon","The feline leaped above the lunar object", "The teacher likes to eat apples",
+                 "The educator enjoys eating fruit","My brother climbs the wall", "Fat people eat cake"]
 
     classifier = Classifier.Classifier()
     analyzer = SentimentAnalysis()
-    print 'subjectivity: {0:.2f}'.format(classifier.subjectivity(sentence1))
-    print 'analyzer positivity: {}'.format(analyzer.positivity(sentence1))
-    print 'classifier positivity: {0:.2f}'.format(classifier.positivity(sentence1))
 
-    """
     courses = TextRank.parse_course_file("2014QComments")
-    for index, course in enumerate(courses[0:1]):
+    for index, course in enumerate(courses[0:3]):
         # Nouns and adjectives, run nltk.help.upenn_tagset() to see all possible tags
         parts_of_speech = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS"]
         window = 2
@@ -336,14 +340,12 @@ def run():
         key_phrases = TextRank.key_phrases_for_course(course, parts_of_speech, window, custom_stop_words, min_keyword_length)
         print index+1, course[0]
         for key_phrase in key_phrases:
-            print key_phrase
-            sentences = []
             phrases = []
             sentences = []
             for comment in course[1]:
                 for sentence in re.split("[.?!]", comment):
                     key_phrase_indices = []
-                    words = re.split("[\W]",sentence)
+                    words = split_sentence(sentence)
                     for index, word in enumerate(words):
                         if word == key_phrase:
                             sentences.append(sentence)
@@ -357,12 +359,14 @@ def run():
                             upper_index = len(words)
                         phrase = ' '.join(words[lower_index:upper_index])
                         phrases.append(phrase)
-            for sentence in sentences:
-                print sentence, analyzer.sentiment(sentence), classifier.positivity(sentence), classifier.objectivity(sentence)
-    """
-    """
-            for lst in extract_similar(phrases):
-               print lst
-            """
+            if (len(sentences) > 1):
+                print "key phrase:", key_phrase
+                for p in phrases:
+                    print p
+                groups = group_sentences([[p] for p in phrases])
+                for group in groups:
+                   print group
+                print ""
+
 
 run()
