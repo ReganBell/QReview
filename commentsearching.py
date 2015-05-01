@@ -29,6 +29,8 @@ def tsplit(string, delimiters):
 
 '''
 phase_for_sentence extracts the keyphrase from the target sentence using part of speech tagging.
+It checks for punctuation and conjunctions that signal the edges of clauses. It also accounts for edge
+cases in formatting the phrases.
 '''
 
 def phrase_for_sentence(key_phrase, temp_list, pos_tag, max_length):
@@ -77,9 +79,8 @@ def phrase_for_sentence(key_phrase, temp_list, pos_tag, max_length):
 
 '''
 phrases_for_key_phrase looks through course comments for keywords and then compiles a list of
-the keyphrases from those words.
+the keyphrases from the comments.
 '''
-
 def phrases_for_key_phrase(key_phrase, comments, max_length):
 
         sentences = []
@@ -93,6 +94,7 @@ def phrases_for_key_phrase(key_phrase, comments, max_length):
                         sentences.append(phrase)
         return sentences
 
+""" finds the comment sentences containing specific keywords (used in autosummarization paragraph) """
 def get_key_sentences(key_phrase, comments):
         sentences = []
         for comment in comments:

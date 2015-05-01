@@ -46,7 +46,7 @@ def find_key_phrases(tokens, parts_of_speech, window):
             for j in range(i+1, right):
                 vertex = (tokens[i], tokens[j], {"weight": 1})
                 edges += [vertex]
-    return pagerank(nodes, edges, 0.15, 15)
+    return pagerank(nodes, edges, 15)
 
 """
 Find key phrases by running TextRank on each comment, finding multi-word keyphrases, and sorting to find
