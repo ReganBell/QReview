@@ -18,26 +18,34 @@ import networkx as nx
 import os
 from nltk.corpus import stopwords
 from pagerank import pagerank
+import TFIDFCalculator
+
 
 def lowercase_tokenize(string):
 
     raw_tokens = nltk.word_tokenize(string)
     return [token.lower() for token in raw_tokens]
 
-def find_key_phrases(tokens, parts_of_speech, window):
+
+def find_key_phrases(tokens, parts_of_speech, window, calc, doc):
 
     tagged_tokens = nltk.pos_tag(tokens)
-    vertices = []
+
+    nodes = []
+    for token in tokens:
+        nodes += (token, calc.word_tf_idf_in_doc(token, doc))
+
+    edges = []
     for i in range(0, len(tagged_tokens)):
         if tagged_tokens[i][1] in parts_of_speech:
             right = min(i + window, len(tagged_tokens))
             for j in range(i+1, right):
                 vertex = (tokens[i], tokens[j], {"weight": 1})
-                vertices += [vertex]
-    return pagerank(vertices, 0.15, 100)
+                edges += [vertex]
+    return pagerank(edges, 0.15, 15)
 
 
-def key_phrases_for_course(course, parts_of_speech, window, stop_words, min_keyword_length):
+def key_phrases_for_course(course, parts_of_speech, window, stop_words, min_keyword_length, calc, doc):
 
     words = {}
     all_tokens = []
