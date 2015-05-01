@@ -18,6 +18,7 @@ import networkx as nx
 import os
 from nltk.corpus import stopwords
 from pagerank import pagerank
+import TFIDFCalculator
 
 
 def lowercase_tokenize(string):
@@ -26,34 +27,22 @@ def lowercase_tokenize(string):
     return [token.lower() for token in raw_tokens]
 
 
-def parse_course_file(path):
-
-    with open(path, "r") as raw:
-        file_string = raw.read()
-
-    course_strings = file_string.split("</course>")
-    courses = []
-
-    for course_string in course_strings:
-        if len(course_string) > 0:
-            title, raw_comments = course_string.split("</title>")
-            comments = raw_comments.split("</comment>")
-            courses += [[title, comments]]
-
-    return courses
-
-
 def find_key_phrases(tokens, parts_of_speech, window):
 
     tagged_tokens = nltk.pos_tag(tokens)
-    vertices = []
+
+    nodes = []
+    for token in tokens:
+         nodes.append((token, 1))
+
+    edges = []
     for i in range(0, len(tagged_tokens)):
         if tagged_tokens[i][1] in parts_of_speech:
             right = min(i + window, len(tagged_tokens))
             for j in range(i+1, right):
                 vertex = (tokens[i], tokens[j], {"weight": 1})
-                vertices += [vertex]
-    return pagerank(vertices, 0.15, 100)
+                edges += [vertex]
+    return pagerank(nodes, edges, 0.15, 15)
 
 
 def key_phrases_for_course(course, parts_of_speech, window, stop_words, min_keyword_length):
@@ -96,18 +85,3 @@ def collapse_key_phrases(tokens, key_words):
             collapsed.update({left: combined_score})
             j += 1
     return collapsed
-
-nltk.download('punkt')
-nltk.download('stopwords')
-nltk.download('maxent_treebank_pos_tagger')
-courses = parse_course_file("2014QComments")
-for course in courses:
-
-    # Nouns and adjectives, run nltk.help.upenn_tagset() to see all possible tags
-    parts_of_speech = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS"]
-    window = 2
-    custom_stop_words = ["course", "class", "this", "will", "in", "you", "make", "sure", "expect"]
-    min_keyword_length = 4
-    key_phrases = key_phrases_for_course(course, parts_of_speech, window, custom_stop_words, min_keyword_length)
-    print course[0]
-    print key_phrases
