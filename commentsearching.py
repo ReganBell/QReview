@@ -8,7 +8,9 @@ Q Comment Summarization
 # Import modules
 import networkx as nx
 from nltk import tokenize
+from nltk.tokenize import wordpunct_tokenize
 import nltk
+import string
 
 
 '''
@@ -25,7 +27,7 @@ class CommentSearching(object):
     '''
 
     def __init__(self, course_title, keyword_list):
-        self._sentences_with_keywords = self._search_comments(course_title, keyword_list)
+        self.sentences_with_keywords = self._search_comments(course_title, keyword_list)
 
 
     def _search_comments(self, course_title, keyword_list):
@@ -45,9 +47,37 @@ class CommentSearching(object):
                     comment_sentences = tokenize.sent_tokenize(comment)
                     for sentence in comment_sentences:
                         for keyword in keyword_list:
-                            if keyword in sentence: sentences_w_keywords.append(sentence)
+                            if keyword in sentence: # sentences_w_keywords.append(sentence)
+                                temp_list = wordpunct_tokenize(sentence)
+                                for wordpunct in temp_list:
+                                    for wp in temp_list:
+                                        if wp.find(keyword) != -1:
+                                            key_index = temp_list.index(wp)
+
+                                    print wordpunct, temp_list
+                                    if temp_list.__contains__(wordpunct):
+                                        wp_index = temp_list.index(wordpunct)
+                                    else:
+                                        break
+                                    if (wordpunct == (',' or '.' or ':' or ';' or '!' or '?')):
+                                        if (wp_index < key_index):
+                                            temp_list = temp_list[wp_index:]
+                                        else:
+                                            temp_list = temp_list[:wp_index]
+                                            print temp_list
+                                    else:
+                                        pos_tag = nltk.pos_tag(temp_list)
+                                        if pos_tag[wp_index][1] == 'CC':
+                                            print pos_tag[wp_index][1], wordpunct, wp_index, key_index
+                                            if (wp_index < key_index and temp_list[wp_index-1] == (',' or '.' or ':' or '!' or '?')):
+                                                temp_list = temp_list[(wp_index+1):]
+                                            elif (temp_list[wp_index-1] == (',' or '.' or ':' or '!' or '?')):
+                                                temp_list = temp_list[:wp_index]
+                                    # print temp_list
+                                print(temp_list)
 
         print(sentences_w_keywords)
+        return sentences_w_keywords
 
 
-# cs = CommentSearching("CHEM 60: Foundations of Physical Chemistry", ["work", "exam"])
+cs = CommentSearching("CHEM 60: Foundations of Physical Chemistry", ["work", "exam"])
