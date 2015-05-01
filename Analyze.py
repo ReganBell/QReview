@@ -237,6 +237,18 @@ def sentence_similarity(sentence1, sentence2):
     return similarity
 
 
+def similarity_matrix(sentences):
+    matrix = [[]]
+    for row, sentence1 in enumerate(sentences):
+        for col, sentence2 in enumerate(sentences):
+            if sentence1 == sentence2:
+                matrix[row][col] = 0
+            else:
+                matrix[row][col] = sentence_similarity(sentence1, sentence2)
+    print matrix
+
+
+
 # sentiment analysis
 
 class SentimentAnalysis:
@@ -302,7 +314,7 @@ def extract_similar(phrases):
     return similar_group
 
 def run():
-    sentence1 = "I am not good"
+    sentence1 = "They're my best friends"
     sentence2 = "Those people are my closest companions"
 
     print "sentence similarity: {0:.3f}".format(sentence_similarity(sentence1, sentence2))
@@ -347,7 +359,7 @@ def run():
                         phrases.append(phrase)
             for sentence in sentences:
                 print sentence, analyzer.sentiment(sentence), classifier.positivity(sentence), classifier.objectivity(sentence)
-            """
+    """
     """
             for lst in extract_similar(phrases):
                print lst
