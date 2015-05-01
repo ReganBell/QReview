@@ -42,7 +42,7 @@ def find_key_phrases(tokens, parts_of_speech, window):
             for j in range(i+1, right):
                 vertex = (tokens[i], tokens[j], {"weight": 1})
                 edges += [vertex]
-    return pagerank(nodes, edges, 0.15, 15)
+    return pagerank(nodes, edges, 15)
 
 
 def key_phrases_for_course(course, parts_of_speech, window, stop_words, min_keyword_length):
