@@ -19,6 +19,19 @@ We import the NetworkX library to use their DiGraph (directed graph) for our Pag
 send in keywords, finds comments that match that
 '''
 
+def tsplit(string, delimiters):
+
+    delimiters = tuple(delimiters)
+    stack = [string,]
+
+    for delimiter in delimiters:
+        for i, substring in enumerate(stack):
+            substack = substring.split(delimiter)
+            stack.pop(i)
+            for j, _substring in enumerate(substack):
+                stack.insert(i+j, _substring)
+
+    return stack
 
 def sentences_for_key_phrase(key_phrase, comments):
 
@@ -32,7 +45,7 @@ def sentences_for_key_phrase(key_phrase, comments):
                         if wp.find(key_phrase) != -1:
                             key_index = temp_list.index(wp)
                         elif ' ' or '/' or '-' in key_phrase:
-                            key_index = temp_list.index(key_phrase.split( )[0])
+                            key_index = temp_list.index(tsplit(key_phrase, (',', '.', '/', '-'))[0])
                     print wordpunct, temp_list
                     if temp_list.__contains__(wordpunct):
                         wp_index = temp_list.index(wordpunct)

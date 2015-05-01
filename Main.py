@@ -21,24 +21,21 @@ def parse_course_file(path):
 
     return courses
 
-def run():
-    nltk.download('punkt')
-    nltk.download('stopwords')
-    nltk.download('maxent_treebank_pos_tagger')
-    courses = parse_course_file("2014QComments")
-    for course in courses:
+nltk.download('punkt')
+nltk.download('stopwords')
+nltk.download('maxent_treebank_pos_tagger')
+courses = parse_course_file("2014QComments")
+for course in courses:
 
-        # Nouns and adjectives, run nltk.help.upenn_tagset() to see all possible tags
-        pos = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS"]
-        window = 2
-        custom_stop = ["course", "class", "this", "will", "in", "you", "make", "sure", "expect"]
-        min_keyword_len = 4
-        #calc = TFIDFCalculator(courses)
-        key_phrases = key_phrases_for_course(course, pos, window, custom_stop, min_keyword_len)
-        #for key_phrase in key_phrases:
-        #    sentences = sentences_for_key_phrase(key_phrase, course[1])
+    # Nouns and adjectives, run nltk.help.upenn_tagset() to see all possible tags
+    pos = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS"]
+    window = 2
+    custom_stop = ["course", "class", "this", "will", "in", "you", "make", "sure", "expect"]
+    min_keyword_len = 4
+    #calc = TFIDFCalculator(courses)
+    key_phrases = key_phrases_for_course(course, pos, window, custom_stop, min_keyword_len)
+    for key_phrase in key_phrases:
+        sentences = sentences_for_key_phrase(key_phrase, course[1])
 
-        print course[0]
-        print key_phrases
-
-cProfile.run('run()')
+    print course[0]
+    print key_phrases
