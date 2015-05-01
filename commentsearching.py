@@ -53,15 +53,21 @@ def phrase_for_sentence(key_phrase, temp_list, pos_tag):
                     temp_list = temp_list[:wp_index]
                     #print temp_list
             else:
-                left = next(i for i, d in enumerate(pos_tag) if temp_list[0] in d)
+                try:
+                    left = next(i for i, d in enumerate(pos_tag) if temp_list[0] in d)
+                except StopIteration:
+                    return None
                 right = left + len(temp_list)
                 pos_tag = pos_tag[left:right]
-                if pos_tag[wp_index][1] == 'CC':
-                    #print pos_tag[wp_index][1], wordpunct, wp_index, key_index
-                    if (wp_index < key_index) and ((temp_list[wp_index-1] == ',') or (temp_list[wp_index-1] == '.') or (temp_list[wp_index-1] == ':') or (temp_list[wp_index-1] == '!') or (temp_list[wp_index-1] == '?')):
-                        temp_list = temp_list[(wp_index+1):]
-                    elif (temp_list[wp_index-1] == ',') or (temp_list[wp_index-1] == '.') or (temp_list[wp_index-1] == ':') or (temp_list[wp_index-1] == '!') or (temp_list[wp_index-1] == '?'):
-                        temp_list = temp_list[:wp_index]
+                try:
+                    if pos_tag[wp_index][1] == 'CC':
+                        #print pos_tag[wp_index][1], wordpunct, wp_index, key_index
+                        if (wp_index < key_index) and ((temp_list[wp_index-1] == ',') or (temp_list[wp_index-1] == '.') or (temp_list[wp_index-1] == ':') or (temp_list[wp_index-1] == '!') or (temp_list[wp_index-1] == '?')):
+                            temp_list = temp_list[(wp_index+1):]
+                        elif (temp_list[wp_index-1] == ',') or (temp_list[wp_index-1] == '.') or (temp_list[wp_index-1] == ':') or (temp_list[wp_index-1] == '!') or (temp_list[wp_index-1] == '?'):
+                            temp_list = temp_list[:wp_index]
+                except IndexError:
+                    return None
             # print temp_list
         if len(temp_list) <= 10:
             joined_contracted = ' '.join(temp_list).replace(' , ',',').replace(' .','.').replace(' !','!').replace(" ' ", "'")

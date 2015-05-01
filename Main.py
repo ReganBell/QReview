@@ -28,7 +28,7 @@ nltk.download('stopwords')
 nltk.download('maxent_treebank_pos_tagger')
 '''
 courses = parse_course_file("2014QComments")
-for course in courses:
+for course_num, course in enumerate(courses):
 
     # Nouns and adjectives, run nltk.help.upenn_tagset() to see all possible tags
     pos = ["JJ", "JJR", "JJS", "NN", "NNP", "NNPS", "NNS"]
@@ -36,14 +36,13 @@ for course in courses:
     custom_stop = ["course", "class", "this", "will", "in", "you", "make", "sure", "expect"]
     min_keyword_len = 4
     key_phrases = key_phrases_for_course(course, pos, window, custom_stop, min_keyword_len)
-    print course[0]
+    print course_num, course[0]
     key_sentences = set()
     for key_phrase in key_phrases:
         phrases = phrases_for_key_phrase(key_phrase, course[1])
         for phrase in phrases:
             if len(phrase) > 1:
                 key_sentences.add(phrase)
-    print list(key_sentences)
     groups = analyze(list(key_sentences))
 
     pros = []
@@ -72,3 +71,5 @@ for course in courses:
     print "Neutral"
     for neutral in neutrals:
         print "%s (in %d comment%s)" % (neutral[0], len(neutral), "s" if len(neutral) > 1 else "")
+
+    print ""

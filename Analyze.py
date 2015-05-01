@@ -246,7 +246,7 @@ def group_sentences_helper(sentence_groups):
     :param sentence_groups: list of lists (groups) of sentences
     :return: a fully consolidated group of sentence groups (similar groups are combined)
     """
-    threshold = 0.5
+    threshold = 0.45
     max_similarity = 0
     first_index = None
     second_index = None
@@ -288,6 +288,59 @@ def group_sentences(sentences):
 
 def group_sentences(sentences):
     groups = []
+    matrix = []
+    for r, s1 in enumerate(sentences):
+        matrix.append([])
+        for c, s2 in enumerate(sentences):
+            if r <= c:
+                matrix[r].append(0)
+            elif sentence_similarity(s1, s2) > 0.6:
+                matrix[r].append(1)
+            else: matrix[r].append(0)
+    for r, row in enumerate(matrix):
+        group = []
+        matches = []
+        for c, val in enumerate(row):
+            if r == c:
+                group.append(sentences[c])
+            elif val == 1:
+                matches.append((r, c))
+        for i, (r1, c1) in enumerate(matches):
+            similar_to_rest = True
+            for r2, c2 in matches[(i+1):]:
+                if matrix[c1][c2] != 1:
+                    similar_to_rest = False
+            if similar_to_rest:
+                group.append(sentences[c1])
+        groups.append(group)
+    to_return = []
+    while len(groups) > 0:
+        longest_group = 0
+        to_add = []
+        for group in groups:
+            if len(group) > longest_group:
+                longest_group = len(group)
+                to_add= group
+        groups.remove(to_add)
+        for sentence in to_add:
+            for group in groups:
+                if sentence in group:
+                    group.remove(sentence)
+        to_return.append(to_add)
+    return to_return
+
+"""
+def group_sentences(sentences):
+    groups = []
+    matrix = []
+    for r, s1 in sentences:
+        matrix.append([])
+        for c, s2 in sentences:
+            if r <= c:
+                matrix[r].append(0)
+            elif sentence_similarity(s1, s2) > 0.6:
+                matrix[r].append(1)
+            else: matrix[r].append(0)
     matrix = [[1 if (s1 == s2) or (sentence_similarity(s1, s2) > 0.6) else 0 for s1 in sentences] for s2 in sentences]
     for r, row in enumerate(matrix):
         group = []
@@ -321,7 +374,7 @@ def group_sentences(sentences):
                     group.remove(sentence)
         to_return.append(to_add)
     return to_return
-
+"""
 
 '''
 def group_sentences(sentences):
@@ -432,5 +485,8 @@ def run():
     sentences = ['Yascha is a brilliant writer and a great guy', 'Take this course if you want a good Expos experience', 'Yascha is a great teacher who leads lively discussions', 'This is a very good class for expos', 'Other expos classes could be better', "Make sure that you're very interested in government", "If you're at all interested in technology", 'The essays are difficult but rewarding']
     start_time = time.time()
     groups = analyze(sentences)
+    print("--- %s seconds ---" % (time.time() - start_time))
+    for sentences, pos in groups:
+        print pos, sentences
 
 #run()
