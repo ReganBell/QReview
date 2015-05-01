@@ -5,8 +5,8 @@ Q Comment Summarization
 4/30/15
 """
 
-import re
-import math
+from re import split
+from math import sqrt, exp
 
 from nltk.stem.snowball import EnglishStemmer
 from nltk.corpus.reader.wordnet import Lemma
@@ -62,7 +62,7 @@ def vector_length(vector):
     :type vector: float list
     :return: float: length of given vector
     """
-    return math.sqrt(dot_product(vector, vector))
+    return sqrt(dot_product(vector, vector))
 
 
 def cosine_similarity(vector1, vector2):
@@ -124,7 +124,7 @@ def similarity_score(word1, word2):
     alpha = 0.2
     beta = 0.6
     l, h = get_path_length_and_subsumer_height(word1, word2)
-    return math.exp((-1)*alpha*l)*((math.exp(beta*h)-math.exp((-1)*beta*h))/(math.exp(beta*h)+math.exp((-1)*beta*h)))
+    return exp((-1)*alpha*l)*((exp(beta*h)-exp((-1)*beta*h))/(exp(beta*h)+exp((-1)*beta*h)))
 
 
 def semantic_vector_element(word, words, threshold):
@@ -152,7 +152,7 @@ def split_sentence(sentence):
     :type sentence: string
     :return: string list: a list of each word in sentence, with punctuation removed and contractions expanded
     """
-    words = map(lambda s: s.lower(), filter(None, re.split("[^a-zA-Z0-9'_]", sentence)))
+    words = map(lambda s: s.lower(), filter(None, split("[^a-zA-Z0-9'_]", sentence)))
     to_return = []
     for word in words:
         to_return += HelperDicts.expand_contractions(word).split(" ")
